@@ -20,13 +20,15 @@ public class JobConfig {
                                 BilanJobListener listener,
                                 Step createStagingIndexStep,
                                 Step suppressionObsoleteStep,
-                                Step importCsvStep) {
+                                Step importCsvStep,
+                                Step createAdresseIndexStep) {
         return new JobBuilder("importAdresseJob", jobRepository)
                 .listener(listener)
-                .start(importCsvStep)
-                .next(createStagingIndexStep)
-                .next(importAdresseStep)
-                .next(suppressionObsoleteStep)
+                //.start(importCsvStep)
+                //.next(createStagingIndexStep)
+                //.next(importAdresseStep)
+                //.next(suppressionObsoleteStep)
+                .start(createAdresseIndexStep)
                 .build();
     }
 

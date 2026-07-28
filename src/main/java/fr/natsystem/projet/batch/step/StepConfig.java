@@ -84,7 +84,7 @@ public class StepConfig {
     public Step suppressionObsoleteStep(
             JobRepository jobRepository,
             PlatformTransactionManager transactionManager,
-            Tasklet suppressionObsoleteTasklet) {
+            SuppressionObsoleteTasklet suppressionObsoleteTasklet) {
 
         return new StepBuilder(
                 "suppressionObsoleteStep",
@@ -99,11 +99,23 @@ public class StepConfig {
     public Step createStagingIndexStep(
             JobRepository jobRepository,
             PlatformTransactionManager transactionManager,
-            Tasklet createStagingIndexTasklet
+            CreateStagingIndexTasklet createStagingIndexTasklet
             ) {
 
         return new StepBuilder("createStagingIndexStep", jobRepository)
                 .tasklet(createStagingIndexTasklet, transactionManager)
+                .build();
+    }
+
+    @Bean
+    public Step createAdresseIndexStep(
+            JobRepository jobRepository,
+            PlatformTransactionManager transactionManager,
+            CreateAdresseIndexTasklet createAdresseIndexTasklet
+    ) {
+
+        return new StepBuilder("createAdresseIndexStep", jobRepository)
+                .tasklet(createAdresseIndexTasklet, transactionManager)
                 .build();
     }
 }
