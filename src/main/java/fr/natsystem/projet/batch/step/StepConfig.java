@@ -8,7 +8,6 @@ import org.springframework.batch.core.listener.ChunkListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
-import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.infrastructure.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.infrastructure.item.database.JdbcPagingItemReader;
 import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
@@ -107,15 +106,16 @@ public class StepConfig {
                 .build();
     }
 
+
     @Bean
     public Step createAdresseIndexStep(
             JobRepository jobRepository,
             PlatformTransactionManager transactionManager,
-            CreateAdresseIndexTasklet createAdresseIndexTasklet
+            CreateIndexInterface createIndexInterface
     ) {
 
         return new StepBuilder("createAdresseIndexStep", jobRepository)
-                .tasklet(createAdresseIndexTasklet, transactionManager)
+                .tasklet(createIndexInterface, transactionManager)
                 .build();
     }
 }

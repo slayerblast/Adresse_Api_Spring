@@ -24,11 +24,11 @@ public class JobConfig {
                                 Step createAdresseIndexStep) {
         return new JobBuilder("importAdresseJob", jobRepository)
                 .listener(listener)
-                //.start(importCsvStep)
-                //.next(createStagingIndexStep)
-                //.next(importAdresseStep)
-                //.next(suppressionObsoleteStep)
-                .start(createAdresseIndexStep)
+                .start(importCsvStep)
+                .next(createStagingIndexStep)
+                .next(importAdresseStep)
+                .next(suppressionObsoleteStep)
+                .next(createAdresseIndexStep)
                 .build();
     }
 

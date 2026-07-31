@@ -30,7 +30,7 @@ public class ProjetApplication {
                     .addLong("startAt", System.currentTimeMillis())
                     .toJobParameters();
             launcher.start(helloWorldJob, params);
-            launcher.start(importAdresseJob, params);
+            //launcher.start(importAdresseJob, params);
 
 
         };
