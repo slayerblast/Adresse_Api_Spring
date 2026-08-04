@@ -39,6 +39,25 @@ public class CreateAdresseIndexSqliteTasklet implements CreateIndexInterface{
                 ON adresse (nom_commune COLLATE NOCASE);
                 """
         );
+        jdbcTemplate.update("""
+                INSERT INTO adresse_fts(
+                id,
+                x,
+                y,
+                type_position,
+                search_text
+            )
+            SELECT
+                id,
+                x,
+                y,
+                type_position,
+                COALESCE(numero, '') || ' ' ||
+                COALESCE(nom_voie, '') || ' ' ||
+                COALESCE(code_postal, '') || ' ' ||
+                COALESCE(nom_commune, '')
+            FROM adresse;
+            """);
 
         return RepeatStatus.FINISHED;
     }

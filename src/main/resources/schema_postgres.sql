@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION IF NOT EXISTS unaccent;
 CREATE TABLE IF NOT EXISTS adresse (
                                        id TEXT,
                                        id_fantoir TEXT,
@@ -22,6 +24,7 @@ CREATE TABLE IF NOT EXISTS adresse (
                                        source_nom_voie TEXT,
                                        certification_commune INTEGER,
                                        cad_parcelles TEXT,
+                                       search_text text,
                                        CONSTRAINT uk_adresse UNIQUE (id, type_position, x, y)
     );
 

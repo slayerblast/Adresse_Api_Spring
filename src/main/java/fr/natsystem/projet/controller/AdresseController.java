@@ -15,6 +15,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @Slf4j
 @Tag(name = "Adresses", description = "Recherche dans le référentiel local BAN")
 @CrossOrigin(origins = "http://localhost:4200/")
@@ -86,5 +89,11 @@ public class AdresseController {
         log.info("page={}", pageable.getPageSize());
         log.info("offset={}", pageable.getOffset());
         return service.rechercher( codePostal, rue, commune, pageable);
+    }
+    @GetMapping("/autocomplete")
+    public List<Adresse> autoComplete(
+            @RequestParam String q) {
+
+        return service.autoComplete(q);
     }
 }

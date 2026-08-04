@@ -53,4 +53,14 @@ CREATE TABLE IF NOT EXISTS adresse_staging (
 
     );
 
+drop table if exists adresse_fts;
 
+CREATE VIRTUAL TABLE adresse_fts
+USING fts5(
+    id UNINDEXED,
+    x UNINDEXED,
+    y UNINDEXED,
+    type_position UNINDEXED,
+    search_text,
+    tokenize = 'unicode61 remove_diacritics 2'
+);

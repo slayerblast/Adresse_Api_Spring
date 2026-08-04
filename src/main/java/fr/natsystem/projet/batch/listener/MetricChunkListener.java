@@ -1,6 +1,6 @@
 package fr.natsystem.projet.batch.listener;
 
-import fr.natsystem.projet.services.BatchMetrics;
+import fr.natsystem.projet.metric.BatchMetrics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.listener.ChunkListener;
@@ -33,4 +33,5 @@ public class MetricChunkListener implements ChunkListener {
                 metrics.consumeProcessorMs()
         );
     }
+
 }

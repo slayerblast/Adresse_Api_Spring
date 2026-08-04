@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -91,5 +92,32 @@ public class AdresseRepositoryPostgres implements AdresseRepository {
                 total
         );
 
+    }
+
+    @Override
+    public List<Adresse> autoComplete(String q) {
+
+        String search = Normalizer.normalize(
+                        q,
+                        Normalizer.Form.NFD
+                )
+                .replaceAll("\\p{M}", "")
+                .replace("-", " ")
+                .replace("'", " ")
+                .toLowerCase()
+                .trim();
+
+        String sql = """
+       SELECT *
+       FROM adresse
+       ORDER BY similarity(search_text, ?) DESC
+       LIMIT 10;
+        """;
+
+        return jdbcTemplate.query(
+                sql,
+                new AdresseRowMapper(),
+                search
+        );
     }
 }

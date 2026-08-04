@@ -13,7 +13,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Profile("sqlite")
 @Repository
@@ -31,7 +33,7 @@ public class AdresseRepositorySqlite implements AdresseRepository {
             String commune,
             Pageable pageable
     ) {
-        log.info("DANS LA RECHERCHE DE AdresseRepositorySqlite");
+
         StringBuilder where = new StringBuilder(" WHERE 1=1");
         List<Object> params = new ArrayList<>();
 
@@ -96,4 +98,37 @@ public class AdresseRepositorySqlite implements AdresseRepository {
         );
 
     }
+
+    @Override
+    public List<Adresse> autoComplete(String q) {
+
+        String cleaned = q
+                .toLowerCase()
+                .replaceAll("[^\\p{L}\\p{N}]+", " ")
+                .trim();
+
+        String search = Arrays.stream(cleaned.split("\\s+"))
+                .filter(s -> !s.isBlank())
+                .map(s -> s + "*")
+                .collect(Collectors.joining(" "));
+
+        String sql = """
+        SELECT a.*
+        FROM adresse a
+        JOIN adresse_fts f
+          ON a.id = f.id
+         AND a.x = f.x
+         AND a.y = f.y
+         AND a.type_position = f.type_position
+        WHERE f.search_text MATCH ?
+        LIMIT 10
+        """;
+
+        return jdbcTemplate.query(
+                sql,
+                new AdresseRowMapper(),
+                search
+        );
+    }
+
 }

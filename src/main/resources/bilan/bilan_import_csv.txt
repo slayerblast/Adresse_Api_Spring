@@ -1,6 +1,6 @@
 === BILAN IMPORT CSV -> STAGING ===
 
-ReadCount  : 26103605
-WriteCount : 24969952
-Lignes qui n'ont pas passé le BeanValidation : 334484
-Nombre d'ID rejetés : 799169
+ReadCount  : 209210
+WriteCount : 208175
+Lignes qui n'ont pas passé le BeanValidation : 1035
+Nombre d'ID rejetés : 0

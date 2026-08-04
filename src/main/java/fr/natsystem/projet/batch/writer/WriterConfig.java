@@ -23,13 +23,24 @@ public class WriterConfig {
                             nom_commune, code_insee_ancienne_commune, nom_ancienne_commune,
                             x, y, lon, lat, type_position, alias, nom_ld,
                             libelle_acheminement, nom_afnor, source_position, source_nom_voie,
-                            certification_commune, cad_parcelles
+                            certification_commune, cad_parcelles, search_text
                         ) VALUES (
                             :id, :id_fantoir, :numero, :rep, :nom_voie, :code_postal, :code_insee,
                             :nom_commune, :code_insee_ancienne_commune, :nom_ancienne_commune,
                             :x, :y, :lon, :lat, :type_position, :alias, :nom_ld,
                             :libelle_acheminement, :nom_afnor, :source_position, :source_nom_voie,
-                            :certification_commune, :cad_parcelles
+                            :certification_commune, :cad_parcelles, 
+                            lower(
+                                  unaccent(
+                                           concat_ws(
+                                                      ' ',
+                                                      :numero,
+                                                      :nom_voie,
+                                                      :code_postal,
+                                                       :nom_commune
+                                                       )
+                                           )
+                                  )
                         )
                         ON CONFLICT(id, type_position, x, y)
                         DO UPDATE SET

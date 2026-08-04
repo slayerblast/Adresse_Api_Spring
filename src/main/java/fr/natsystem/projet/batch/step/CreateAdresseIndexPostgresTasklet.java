@@ -24,16 +24,21 @@ public class CreateAdresseIndexPostgresTasklet implements CreateIndexInterface{
         log.info("Create Adresse Index Postgres tasklet");
         jdbcTemplate.batchUpdate(
                 """
-                CREATE INDEX idx_adresse_rue
+                CREATE INDEX IF NOT EXISTS idx_adresse_rue
                 ON adresse(LOWER(nom_voie) text_pattern_ops);
                 """,
                 """
-                CREATE INDEX idx_adresse_codePostal
+                CREATE INDEX IF NOT EXISTS idx_adresse_codePostal
                 ON adresse(code_postal text_pattern_ops);
                 """,
                 """
-                CREATE INDEX idx_adresse_commune
+                CREATE INDEX IF NOT EXISTS idx_adresse_commune
                 ON adresse(LOWER(nom_commune) text_pattern_ops);
+                """,
+                """
+                CREATE INDEX idx_adresse_search
+                ON adresse
+                USING gin (search_text gin_trgm_ops);
                 """
         );
 
