@@ -1,8 +1,7 @@
 HELP.md
-adresse.db
+adresse*
 target/
 src/main/resources/adresses*
-explications.txt
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

@@ -20,6 +20,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.SyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Slf4j
@@ -118,12 +120,14 @@ public class StepConfig {
     @Bean
     public Step masterStep(JobRepository repo,
                            CodeInseePartitioner partitioner,
-                           Step importAdresseStep) {
+                           Step importAdresseStep,
+                           @Qualifier("batchTaskExecutor")
+                           TaskExecutor taskExecutor) {
         return new StepBuilder("masterStep", repo)
                 .partitioner("importAdresseStep", partitioner)
                 .step(importAdresseStep)       // step template pour chaque worker
                 .gridSize(workerSize)
-                .taskExecutor(new SimpleAsyncTaskExecutor())
+                .taskExecutor(taskExecutor)
                 .build();
     }
 

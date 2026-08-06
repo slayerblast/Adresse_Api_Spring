@@ -1,12 +1,19 @@
 Etape 10 : utilisation de Partitioner
-J'ai du supprimer dans mon application.properties le reWriteBatchedInserts=true car ça me faisait des erreurs dans lors des insert de doublons.
+J'ai du supprimer dans mon application.properties le reWriteBatchedInserts=true car ça me faisait des erreurs lors
+des insert de doublons.
 Au niveau du gain de performance coté Postgres :
 sans partition 132s
 avec partition : 107
 Context de lancement : lancement sur le premier million d'adresses du csv france
 
-Coté Sqlite le batch script fonctionne bien quand j'utilise le csv 79 par contre j'ai rencontré beaucoup de problème notamment des Database file is locked ou SQLITE_BUSY_SNAPSHOT et je ne sais pas pourquoi mais ça le fait sur des gros volume de données
+Coté Sqlite le batch script fonctionne bien quand j'utilise le csv 79 par contre j'ai rencontré beaucoup de problème
+notamment des Database file is locked ou SQLITE_BUSY_SNAPSHOT et je ne sais pas pourquoi mais ça le fait sur des gros
+volume de données
 200k lines -> OK
 1M lines -> KO
-J'ai pu aussi voir que Sqlite ne gère le parallèlisme donc il fallait mettre obligatoirement le worker à 1 et le pool-size à 1.
+J'ai pu aussi voir que Sqlite ne gère pas le parallèlisme et concurrence du coup dans le masterStep mon taskExecutor est
+différent selon les profils et j'ai géré ça en mettant les deux type de TaskExecutor dans une class
+sqlite : SyncTaskExecutor();
+postgres : SimpleAsyncTaskExecutor();
+J'ai aussi mis un worker et le pool-size à 1 dans l'application.properties
 

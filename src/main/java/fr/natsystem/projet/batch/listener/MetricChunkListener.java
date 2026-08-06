@@ -4,9 +4,6 @@ import fr.natsystem.projet.metric.BatchMetrics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.listener.ChunkListener;
-import org.springframework.batch.core.scope.context.ChunkContext;
-import org.springframework.batch.core.scope.context.StepContext;
-import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.infrastructure.item.Chunk;
 import org.springframework.stereotype.Component;
 
