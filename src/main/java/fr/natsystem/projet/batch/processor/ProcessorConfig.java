@@ -30,14 +30,7 @@ public class ProcessorConfig {
         return new ValidatingItemProcessor<>(validator);
     }
 
-    @Bean
-    public CompositeItemProcessor<Adresse, Adresse> compositeProcessor(
-            DuplicateRulesProcessor duplicateRulesProcessor) {
 
-        CompositeItemProcessor<Adresse, Adresse> comp = new CompositeItemProcessor<>();
-        comp.setDelegates(List.of( duplicateRulesProcessor));
-        return comp;
-    }
 
     @Bean
     public CompositeItemProcessor<Adresse, Adresse> compositeCsvProcessor(

@@ -3,6 +3,7 @@ package fr.natsystem.projet.batch.reader;
 import fr.natsystem.projet.batch.mapper.AdresseFieldSetMapper;
 import fr.natsystem.projet.batch.mapper.AdresseRowMapper;
 import fr.natsystem.projet.model.Adresse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.infrastructure.item.database.JdbcPagingItemReader;
 import org.springframework.batch.infrastructure.item.database.Order;
 import org.springframework.batch.infrastructure.item.database.support.SqlitePagingQueryProvider;
@@ -19,6 +20,7 @@ import javax.sql.DataSource;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @Configuration
 public class ReaderConfig {
 
@@ -44,32 +46,44 @@ public class ReaderConfig {
                 )
                 .fieldSetMapper(fieldSetMapper)
                 .linesToSkip(1)
+                .maxItemCount(1_000_000)
                 .build();
+
     }
 
     @Bean
     @StepScope
-    public JdbcPagingItemReader<Adresse> stagingReader(DataSource ds) throws Exception {
+    public JdbcPagingItemReader<Adresse> stagingReader(
+            DataSource ds,
+            @Value("#{stepExecutionContext['codeInsee']}")
+            String codeInsee)
+            throws Exception {
 
-        SqlitePagingQueryProvider provider = new SqlitePagingQueryProvider();
+        SqlitePagingQueryProvider provider =new SqlitePagingQueryProvider();
+
         provider.setSelectClause("""
-                SELECT id, id_fantoir, numero, rep, nom_voie, code_postal, code_insee,
-                nom_commune, code_insee_ancienne_commune, nom_ancienne_commune,
-                x, y, lon, lat, type_position, alias, nom_ld,
-                libelle_acheminement, nom_afnor, source_position, source_nom_voie,
-                certification_commune, cad_parcelles
-                """);
-        provider.setFromClause("FROM adresse_staging");
+            SELECT
+                id, id_fantoir, numero, rep,nom_voie, code_postal,
+                code_insee,nom_commune,code_insee_ancienne_commune,
+                nom_ancienne_commune, x, y, lon, lat, type_position,
+                alias, nom_ld, libelle_acheminement, nom_afnor,
+                source_position, source_nom_voie,certification_commune,
+                cad_parcelles
+            """);
+
+        provider.setFromClause("FROM adresse_staging ");
+
+        provider.setWhereClause("WHERE code_insee = :codeInsee ");
 
         Map<String, Order> sortKeys = new LinkedHashMap<>();
-        sortKeys.put("code_insee", Order.ASCENDING);
-        sortKeys.put("id", Order.ASCENDING);
+        sortKeys.put( "id",Order.ASCENDING);
         provider.setSortKeys(sortKeys);
+        JdbcPagingItemReader<Adresse> reader = new JdbcPagingItemReader<>(ds, provider);
 
-        JdbcPagingItemReader<Adresse> reader =
-                new JdbcPagingItemReader<>(ds, provider);
 
-        reader.setName("stagingReader");
+        reader.setDataSource(ds);
+        reader.setQueryProvider(provider);
+        reader.setParameterValues(Map.of("codeInsee", codeInsee));
         reader.setPageSize(50000);
         reader.setRowMapper(new AdresseRowMapper());
         reader.afterPropertiesSet();

@@ -3,6 +3,7 @@ package fr.natsystem.projet.batch.listener;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListener;
 import org.springframework.batch.core.step.StepExecution;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Component
@@ -19,8 +21,8 @@ import java.time.Duration;
 @Getter
 @Setter
 public class BilanJobListener implements JobExecutionListener {
-    private int doublon = 0;
-    private int doublonPur = 0;
+    private final AtomicLong doublon = new AtomicLong(0);
+    private final AtomicLong doublonPur = new AtomicLong(0);
     private  int obsolete = 0 ;
     private final AdresseSkipListener skipListener;
 
@@ -67,7 +69,7 @@ public class BilanJobListener implements JobExecutionListener {
         // ============================
 
         importSet = je.getStepExecutions().stream()
-                .filter(s-> s.getStepName().equals("importAdresseStep"))
+                .filter(s-> s.getStepName().equals("masterStep"))
                 .findFirst().orElse(null);
         if(importSet!=null){
             try (FileWriter writer = new FileWriter("src/main/resources/bilan/bilan.txt")) {
@@ -117,7 +119,9 @@ public class BilanJobListener implements JobExecutionListener {
             writer.write("=== Temps par étape ===\n");
 
             for (StepExecution step : je.getStepExecutions()) {
-
+                if (step.getStepName().startsWith("importAdresseStep:")) {
+                    continue;
+                }
                 Duration stepDuration = Duration.between(
                         step.getStartTime(),
                         step.getEndTime()
@@ -129,6 +133,53 @@ public class BilanJobListener implements JobExecutionListener {
                                 + stepDuration.toSeconds()
                                 + " secondes\n"
                 );
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // ============================
+// BILAN DES ERREURS
+// ============================
+
+        try (FileWriter writer =
+                     new FileWriter("src/main/resources/bilan/bilan_failed.txt")) {
+
+            writer.write("=== BILAN DES ERREURS ===\n\n");
+
+            boolean hasFailure = false;
+
+            for (StepExecution step : je.getStepExecutions()) {
+
+                if (step.getStatus() != BatchStatus.FAILED) {
+                    continue;
+                }
+
+                hasFailure = true;
+
+                writer.write("Step : " + step.getStepName() + "\n");
+                writer.write("Status : " + step.getStatus() + "\n");
+                writer.write("ExitStatus : " + step.getExitStatus() + "\n\n");
+
+                for (Throwable throwable : step.getFailureExceptions()) {
+
+                    writer.write("Exception :\n");
+
+                    writer.write(
+                            throwable.getClass().getName()
+                                    + " : "
+                                    + throwable.getMessage()
+                                    + "\n\n"
+                    );
+                }
+
+                writer.write(
+                        "----------------------------------------\n\n");
+            }
+
+            if (!hasFailure) {
+                writer.write("Aucune erreur détectée.\n");
             }
 
         } catch (IOException e) {

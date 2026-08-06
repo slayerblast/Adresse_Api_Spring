@@ -16,7 +16,7 @@ public class JobConfig {
     }
 
     @Bean
-    public Job importAdresseJob(JobRepository jobRepository, Step importAdresseStep,
+    public Job importAdresseJob(JobRepository jobRepository, Step masterStep,
                                 BilanJobListener listener,
                                 Step createStagingIndexStep,
                                 Step suppressionObsoleteStep,
@@ -26,7 +26,7 @@ public class JobConfig {
                 .listener(listener)
                 .start(importCsvStep)
                 .next(createStagingIndexStep)
-                .next(importAdresseStep)
+                .next(masterStep)
                 .next(suppressionObsoleteStep)
                 .next(createAdresseIndexStep)
                 .build();

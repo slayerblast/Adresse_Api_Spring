@@ -8,8 +8,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,9 +21,13 @@ import java.util.Map;
 @Service
 @Getter
 @Setter
+@StepScope
 @RequiredArgsConstructor
 public class AdresseCacheService {
     private Map<AdresseKey, Adresse> cache = new HashMap<>(10000);
+
+    @Value("#{stepExecutionContext['codeInsee']}")
+    private String codeInsee;
 
     private final AdresseRowMapper rowMapper;
     private String currentCodeInsee;
@@ -58,3 +64,4 @@ public class AdresseCacheService {
         cache.put(key, adresse);
     }
 }
+

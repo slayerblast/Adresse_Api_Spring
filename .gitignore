@@ -1,9 +1,7 @@
 HELP.md
 adresse.db
 target/
-src/main/resources/adresses-79-2026-06-22.csv
-src/main/resources/adresses-79-2026-06-23.csv
-src/main/resources/adresses-france.csv
+src/main/resources/adresses*
 explications.txt
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

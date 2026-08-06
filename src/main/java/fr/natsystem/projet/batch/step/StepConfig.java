@@ -2,6 +2,7 @@ package fr.natsystem.projet.batch.step;
 
 import fr.natsystem.projet.batch.listener.AdresseSkipListener;
 import fr.natsystem.projet.batch.listener.StepProgessListener;
+import fr.natsystem.projet.batch.processor.DuplicateRulesProcessor;
 import fr.natsystem.projet.model.Adresse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.listener.ChunkListener;
@@ -14,13 +15,19 @@ import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
 import org.springframework.batch.infrastructure.item.support.CompositeItemProcessor;
 import org.springframework.batch.infrastructure.item.validator.ValidationException;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Slf4j
 @Configuration
 public class StepConfig {
+
+    @Value("${workerSize}")
+    private int workerSize;
     @Bean
     public Step helloStep(JobRepository jobRepository, PlatformTransactionManager txManager) {
         return new StepBuilder("helloStep", jobRepository)
@@ -30,14 +37,15 @@ public class StepConfig {
                 }, txManager)
                 .build();
     }
-    int test = 0;
+
     @Bean
     public Step importAdresseStep(
             JobRepository repo,
             PlatformTransactionManager tx,
             JdbcPagingItemReader<Adresse> stagingReader,
+            @Qualifier("jdbcWriter")
             JdbcBatchItemWriter<Adresse> jdbcWriter,
-            CompositeItemProcessor<Adresse, Adresse> compositeProcessor,
+            DuplicateRulesProcessor  duplicateRulesProcessor,
             StepProgessListener listener,
             AdresseSkipListener skipListener,
             ChunkListener MetricChunkListener) {
@@ -45,7 +53,7 @@ public class StepConfig {
                 .<Adresse, Adresse>chunk(10000)
                 .transactionManager(tx)
                 .reader(stagingReader)
-                .processor(compositeProcessor)
+                .processor(duplicateRulesProcessor)
                 .writer(jdbcWriter)
                 .faultTolerant()
                 .skip(ValidationException.class)
@@ -61,6 +69,7 @@ public class StepConfig {
             JobRepository repo,
             PlatformTransactionManager tx,
             FlatFileItemReader<Adresse> csvReader,
+            @Qualifier("stagingWriter")
             JdbcBatchItemWriter<Adresse> stagingWriter,
             CompositeItemProcessor <Adresse, Adresse> compositeCsvProcessor,
             StepProgessListener listener,
@@ -106,6 +115,17 @@ public class StepConfig {
                 .build();
     }
 
+    @Bean
+    public Step masterStep(JobRepository repo,
+                           CodeInseePartitioner partitioner,
+                           Step importAdresseStep) {
+        return new StepBuilder("masterStep", repo)
+                .partitioner("importAdresseStep", partitioner)
+                .step(importAdresseStep)       // step template pour chaque worker
+                .gridSize(workerSize)
+                .taskExecutor(new SimpleAsyncTaskExecutor())
+                .build();
+    }
 
     @Bean
     public Step createAdresseIndexStep(

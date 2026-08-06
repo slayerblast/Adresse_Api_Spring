@@ -64,3 +64,5 @@ USING fts5(
     search_text,
     tokenize = 'unicode61 remove_diacritics 2'
 );
+PRAGMA busy_timeout = 60000;
+PRAGMA journal_mode=WAL;
