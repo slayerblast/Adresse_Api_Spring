@@ -18,23 +18,25 @@ postgres : SimpleAsyncTaskExecutor();
 J'ai aussi mis un worker et le pool-size à 1 dans l'application.properties
 
 Etape 11 : Récupération optionnelle, contrôles et rapport
-Pour cette étape, j'ai d'abord établi un liste de scénario.
+Pour cette étape, j'ai d'abord établi une liste de scénario.
 
-scénario avec argument :
-param activé -> >2 fichiers dans le dossier -> arg valide -> fichier valide -> traitement
-param activé -> >2 fichiers dans le dossier -> arg valide -> fichier invalide -> FAIL DU JOB
-param activé -> >2 fichiers dans le dossier -> arg non valide ->ERROR : MULTIPLE_FILES_FOUND
-param activé -> <2 fichiers dans le dossier -> arg valide -> fichier valide -> traitement
-param activé -> <2 fichiers dans le dossier -> arg valide -> fichier invalide -> FAIL DU JOB
-param activé -> <2 fichiers dans le dossier -> 1 fichier dans le dossier -> arg non valide -> ERROR : MULTIPLE_FILES_FOUND
-param activé -> <2 fichiers dans le dossier -> 0 fichier dans le dossier -> arg non valide -> récupération en ligne -> fichier valide -> archivage/traitement
-param activé -> <2 fichiers dans le dossier -> 0 fichier dans le dossier -> arg non valide -> récupération en ligne -> fichier invalide -> FAIL DU JOB
-param activé -> <2 fichiers dans le dossier -> 0 fichier dans le dossier -> arg non valide -> échec récupération en ligne -> ERROR : NO_INPUT_FILE
+Scénario avec argument :
+>2 fichiers dans le dossier -> arg valide -> fichier valide -> traitement
+>2 fichiers dans le dossier -> arg valide -> fichier invalide -> FAIL DU JOB
+>2 fichiers dans le dossier -> arg non valide ->ERROR : MULTIPLE_FILES_FOUND
+<2 fichiers dans le dossier -> arg valide -> fichier valide -> traitement
+<2 fichiers dans le dossier -> arg valide -> fichier invalide -> FAIL DU JOB
+<2 fichiers dans le dossier -> 1 fichier dans le dossier -> arg non valide -> param désactivé -> ERROR : NO_INPUT_FILE
+<2 fichiers dans le dossier -> 1 fichier dans le dossier -> arg non valide -> param activé-> ERROR : MULTIPLE_FILES_FOUND
+<2 fichiers dans le dossier -> 0 fichier dans le dossier -> arg non valide -> param activé -> récupération en ligne -> fichier valide -> archivage/traitement
+<2 fichiers dans le dossier -> 0 fichier dans le dossier -> arg non valide -> param activé -> récupération en ligne -> fichier invalide -> FAIL DU JOB
+<2 fichiers dans le dossier -> 0 fichier dans le dossier -> arg non valide -> param activé -> échec récupération en ligne -> ERROR : NO_INPUT_FILE
 
 
-scénario sans argument :
-param activé -> >2 fichiers dans le dossier -> ERROR : MULTIPLE_FILES_FOUND
-param activé -> <2 fichiers dans le dossier -> 1 fichier dans le dossier -> fichier valide -> traitement
-param activé -> <2 fichiers dans le dossier -> 1 fichier dans le dossier -> fichier invalide -> FAIL DU JOB
-param activé -> <2 fichiers dans le dossier -> 0 fichier dans le dossier -> récupération en ligne -> fichier valide -> archivage/traitement
-param activé -> <2 fichiers dans le dossier -> 0 fichier dans le dossier -> récupération en ligne -> fichier invalide -> FAIL DU JOB
+Scénario sans argument :
+>2 fichiers dans le dossier -> ERROR : MULTIPLE_FILES_FOUND
+<2 fichiers dans le dossier -> 1 fichier dans le dossier -> fichier valide -> traitement
+<2 fichiers dans le dossier -> 1 fichier dans le dossier -> fichier invalide -> FAIL DU JOB
+<2 fichiers dans le dossier -> 0 fichier dans le dossier -> param désactivé -> ERROR : NO_INPUT_FILE
+<2 fichiers dans le dossier -> 0 fichier dans le dossier -> param activé -> récupération en ligne -> fichier valide -> archivage/traitement
+<2 fichiers dans le dossier -> 0 fichier dans le dossier -> param activé -> récupération en ligne -> fichier invalide -> FAIL DU JOB

@@ -17,7 +17,7 @@ public class ProjetApplication {
         SpringApplication.run(ProjetApplication.class, args);
     }
 
-    // Pour lancer le job au démarrage (mode démo) :
+
     @Bean
     public CommandLineRunner run(JobOperator launcher, Job helloWorldJob, Job importAdresseJob) {
         return args -> {
