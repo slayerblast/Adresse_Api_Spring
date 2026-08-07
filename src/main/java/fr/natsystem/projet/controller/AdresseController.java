@@ -90,8 +90,53 @@ public class AdresseController {
         log.info("offset={}", pageable.getOffset());
         return service.rechercher( codePostal, rue, commune, pageable);
     }
+
+    @Operation(
+            summary = "Recherche d'adresses dynamique",
+            description = """
+                Recherche une ou plusieurs adresses selon
+                le code postal,
+                le nom de voie
+                et la commune.
+                et affiche le résultat en direct
+                """
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Liste paginée des adresses trouvées",
+            content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = Page.class),
+                    examples = @ExampleObject(
+                            value = """
+                            {
+                              "content": [
+                                {
+                                  "id": "75115_2830_00019",
+                                  "numero": "19",
+                                  "nom_voie": "Rue du Docteur Finlay",
+                                  "code_postal": "75015",
+                                  "code_insee": "75115",
+                                  "nom_commune": "Paris 15e Arrondissement",
+                                  "lat": 48.852277,
+                                  "lon": 2.288622
+                                }
+                              ],
+                              "pageable": {
+                                "pageNumber": 0,
+                                "pageSize": 20
+                              },
+                              "totalElements": 1,
+                              "totalPages": 1,
+                              "number": 0
+                            }
+                            """
+                    )
+            )
+    )
     @GetMapping("/autocomplete")
     public List<Adresse> autoComplete(
+            @Parameter(description = "Nom d'une adresse (ex : 19 rue du Docteur Finlay 75015 Paris )")
             @RequestParam String q) {
 
         return service.autoComplete(q);
