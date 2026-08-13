@@ -1,7 +1,11 @@
 package fr.natsystem.projet.batch.processor;
 
+import fr.natsystem.projet.batch.listener.BilanJobListener;
+import fr.natsystem.projet.metric.BatchMetrics;
 import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.model.AdresseValidator;
+import fr.natsystem.projet.services.AdresseCacheService;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -32,15 +36,18 @@ public class ProcessorConfig {
 
 
 
+
     @Bean
     public CompositeItemProcessor<Adresse, Adresse> compositeCsvProcessor(
             ValidatingItemProcessor<Adresse> validatingProcessor,
-            BeanValidatingItemProcessor<Adresse> beanValidatingProcessor) {
+            BeanValidatingItemProcessor<Adresse> beanValidatingProcessor,
+            DuplicateRulesProcessor duplicateRulesProcessor) {
 
         CompositeItemProcessor<Adresse, Adresse> comp = new CompositeItemProcessor<>();
         comp.setDelegates(List.of(
                 beanValidatingProcessor,
-                validatingProcessor
+                validatingProcessor,
+                duplicateRulesProcessor
         ));
         return comp;
     }

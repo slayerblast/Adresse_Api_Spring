@@ -36,7 +36,7 @@ public class CreateAdresseIndexPostgresTasklet implements CreateIndexInterface{
                 ON adresse(LOWER(nom_commune) text_pattern_ops);
                 """,
                 """
-                CREATE INDEX idx_adresse_search
+                CREATE INDEX IF NOT EXISTS idx_adresse_search
                 ON adresse
                 USING gin (search_text gin_trgm_ops);
                 """

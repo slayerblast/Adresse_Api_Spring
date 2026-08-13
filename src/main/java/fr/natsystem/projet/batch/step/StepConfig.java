@@ -30,6 +30,7 @@ public class StepConfig {
 
     @Value("${workerSize}")
     private int workerSize;
+
     @Bean
     public Step helloStep(JobRepository jobRepository, PlatformTransactionManager txManager) {
         return new StepBuilder("helloStep", jobRepository)
@@ -47,15 +48,15 @@ public class StepConfig {
             JdbcPagingItemReader<Adresse> stagingReader,
             @Qualifier("jdbcWriter")
             JdbcBatchItemWriter<Adresse> jdbcWriter,
-            DuplicateRulesProcessor  duplicateRulesProcessor,
+            CompositeItemProcessor <Adresse, Adresse> compositeCsvProcessor,
             StepProgessListener listener,
             AdresseSkipListener skipListener,
             ChunkListener MetricChunkListener) {
         return new StepBuilder("importAdresseStep", repo)
-                .<Adresse, Adresse>chunk(10000)
+                .<Adresse, Adresse>chunk(1000)
                 .transactionManager(tx)
                 .reader(stagingReader)
-                .processor(duplicateRulesProcessor)
+                .processor(compositeCsvProcessor)
                 .writer(jdbcWriter)
                 .faultTolerant()
                 .skip(ValidationException.class)
@@ -73,14 +74,12 @@ public class StepConfig {
             FlatFileItemReader<Adresse> csvReader,
             @Qualifier("stagingWriter")
             JdbcBatchItemWriter<Adresse> stagingWriter,
-            CompositeItemProcessor <Adresse, Adresse> compositeCsvProcessor,
             StepProgessListener listener,
             AdresseSkipListener skipListener) {
         return new StepBuilder("importCsvStep", repo)
                 .<Adresse, Adresse>chunk(10000)
                 .transactionManager(tx)
                 .reader(csvReader)
-                .processor(compositeCsvProcessor)
                 .writer(stagingWriter)
                 .faultTolerant()
                 .skip(ValidationException.class)
@@ -102,6 +101,29 @@ public class StepConfig {
                 .tasklet(
                         suppressionObsoleteTasklet,
                         transactionManager)
+                .build();
+    }
+
+    @Bean
+    public Step checksumStep(
+            JobRepository jobRepository,
+            PlatformTransactionManager transactionManager,
+            ChecksumTasklet checksumTasklet ) {
+
+        return new StepBuilder(
+                "checksumStep",
+                jobRepository)
+                .tasklet(checksumTasklet, transactionManager)
+                .build();
+    }
+
+    @Bean
+    public Step csvToStagingStep(
+            JobRepository jobRepository,
+            PlatformTransactionManager transactionManager,
+            CsvToStagingTasklet csvToStagingTasklet){
+        return new StepBuilder("csvToStagingStep",jobRepository)
+                .tasklet(csvToStagingTasklet, transactionManager)
                 .build();
     }
 
@@ -140,6 +162,16 @@ public class StepConfig {
 
         return new StepBuilder("createAdresseIndexStep", jobRepository)
                 .tasklet(createIndexInterface, transactionManager)
+                .build();
+    }
+
+    @Bean
+    public Step downloadStep(JobRepository jobRepository,
+                             PlatformTransactionManager transactionManager,
+                             DownloadTasklet downloadTasklet) {
+
+        return new StepBuilder("downloadStep", jobRepository)
+                .tasklet(downloadTasklet, transactionManager)
                 .build();
     }
 }

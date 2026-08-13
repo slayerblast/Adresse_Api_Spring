@@ -1,8 +1,10 @@
 package fr.natsystem.projet.batch.reader;
 
+import fr.natsystem.projet.batch.listener.BilanJobListener;
 import fr.natsystem.projet.batch.mapper.AdresseFieldSetMapper;
 import fr.natsystem.projet.batch.mapper.AdresseRowMapper;
 import fr.natsystem.projet.model.Adresse;
+import fr.natsystem.projet.services.ChecksumUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.infrastructure.item.database.JdbcPagingItemReader;
 import org.springframework.batch.infrastructure.item.database.Order;
@@ -17,19 +19,26 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 
 import javax.sql.DataSource;
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Slf4j
 @Configuration
 public class ReaderConfig {
+    @Value("${spring.batch.pathFile}")
+    private String pathFile;
 
     @Bean
     @StepScope
     public FlatFileItemReader<Adresse> csvDynamicReader(
             @Value("#{jobParameters['inputFile']}") String inputFile,
-            AdresseFieldSetMapper fieldSetMapper) {
-
+            AdresseFieldSetMapper fieldSetMapper) throws Exception {
+        if (inputFile.isBlank()) {
+            File folder = new File(pathFile);
+            File[] files = folder.listFiles(File::isFile);
+            inputFile = files[0].getAbsolutePath();
+        }
         return new FlatFileItemReaderBuilder<Adresse>()
                 .name("csvReader")
                 .resource(new FileSystemResource(inputFile))
@@ -46,7 +55,6 @@ public class ReaderConfig {
                 )
                 .fieldSetMapper(fieldSetMapper)
                 .linesToSkip(1)
-                .maxItemCount(1_000_000)
                 .build();
 
     }
@@ -84,7 +92,7 @@ public class ReaderConfig {
         reader.setDataSource(ds);
         reader.setQueryProvider(provider);
         reader.setParameterValues(Map.of("codeInsee", codeInsee));
-        reader.setPageSize(50000);
+        reader.setPageSize(10000);
         reader.setRowMapper(new AdresseRowMapper());
         reader.afterPropertiesSet();
 

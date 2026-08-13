@@ -21,12 +21,9 @@ public class ProjetApplication {
     @Bean
     public CommandLineRunner run(JobOperator launcher, Job helloWorldJob, Job importAdresseJob) {
         return args -> {
-            //On ajoute cette condition car cela faisait planter le build de test
-            if(args.length==0){
-                return;
-            }
+            String inputFile = args.length > 0 ? args[0] : "";
             JobParameters params = new JobParametersBuilder()
-                    .addString("inputFile", args[0])
+                    .addString("inputFile", inputFile)
                     .addLong("startAt", System.currentTimeMillis())
                     .toJobParameters();
             launcher.start(helloWorldJob, params);

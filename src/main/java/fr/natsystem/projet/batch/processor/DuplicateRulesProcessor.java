@@ -20,22 +20,11 @@ import org.springframework.stereotype.Component;
 @StepScope
 @RequiredArgsConstructor
 public class DuplicateRulesProcessor
-        implements ItemProcessor<Adresse, Adresse>, StepExecutionListener {
+        implements ItemProcessor<Adresse, Adresse>{
 
     private final AdresseCacheService adresseCacheService;
     private final BilanJobListener bilanJobListener;
     private final BatchMetrics metrics;
-
-    @BeforeStep
-    public void beforeStep(StepExecution stepExecution) {
-
-        String codeInsee =
-                stepExecution
-                        .getExecutionContext()
-                        .getString("codeInsee");
-
-        adresseCacheService.load(codeInsee);
-    }
 
     @Override
     public @Nullable Adresse process(Adresse item) {

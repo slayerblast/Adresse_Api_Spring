@@ -53,7 +53,6 @@ public class AdresseCacheService {
         for (Adresse adresse : adresses) {
             cache.put(adresse.key(), adresse);
         }
-
     }
 
     public Adresse get(AdresseKey key) {

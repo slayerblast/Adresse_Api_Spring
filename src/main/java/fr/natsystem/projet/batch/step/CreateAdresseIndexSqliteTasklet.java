@@ -24,7 +24,7 @@ public class CreateAdresseIndexSqliteTasklet implements CreateIndexInterface{
     public RepeatStatus execute(
             StepContribution contribution,
             ChunkContext chunkContext) {
-        log.info("Create Adresse Index Sqlite tasklet");
+
         jdbcTemplate.batchUpdate(
                 """
                 CREATE INDEX IF NOT EXISTS idx_adresse_rue

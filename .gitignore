@@ -5,6 +5,17 @@ src/main/resources/adresses*
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+data/bilan/*
+data/archive/*
+data/csvFile/*
+data/FichierGz/*
+data/ressource/*
+!data/bilan/.gitkeep
+!data/archive/.gitkeep
+!data/csvFile/.gitkeep
+!data/FichierGz/.gitkeep
+!data/ressource/.gitkeep
+
 
 ### STS ###
 .apt_generated
