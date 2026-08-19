@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/jobs")
 public class BatchController {
 
-    @Qualifier("JobTaskExecutor")
+   // @Qualifier("JobTaskExecutor")
     private final JobOperator jobOperator;
 
     private final JobRepository jobRepository;

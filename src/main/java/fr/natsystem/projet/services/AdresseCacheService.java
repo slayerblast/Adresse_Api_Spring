@@ -58,7 +58,6 @@ public class AdresseCacheService {
     public Adresse get(AdresseKey key) {
         return cache.get(key);
     }
-
     public void put(AdresseKey key, Adresse adresse) {
         cache.put(key, adresse);
     }

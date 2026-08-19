@@ -35,7 +35,9 @@ public class TaskExecutorConfig {
         return executor;
     }
 
+
     @Bean("JobTaskExecutor")
+    @Primary
     public JobOperatorFactoryBean asyncJobOperator(JobRepository jobRepository) {
         JobOperatorFactoryBean jobOperatorFactoryBean = new JobOperatorFactoryBean();
         jobOperatorFactoryBean.setJobRepository(jobRepository);
