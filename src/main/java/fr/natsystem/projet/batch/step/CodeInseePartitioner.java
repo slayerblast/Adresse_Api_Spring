@@ -37,15 +37,9 @@ public class CodeInseePartitioner implements Partitioner {
             ExecutionContext context =
                     new ExecutionContext();
 
-            context.putString(
-                    "codeInsee",
-                    codeInsee
-            );
+            context.putString("codeInsee", codeInsee);
 
-            partitions.put(
-                    "partition-" + codeInsee,
-                    context
-            );
+            partitions.put("partition-" + codeInsee, context);
         }
 
         return partitions;

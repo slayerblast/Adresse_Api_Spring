@@ -57,6 +57,11 @@ public class DownloadTasklet implements Tasklet {
                 .getJobExecution()
                 .getExecutionContext()
                 .putString("checksum", checksum);
+        chunkContext.getStepContext()
+                .getStepExecution()
+                .getJobExecution()
+                .getExecutionContext()
+                .putString("lastDeciderStatus", "READY");
         contribution.setExitStatus(new ExitStatus("READY"));
         return RepeatStatus.FINISHED;
     }

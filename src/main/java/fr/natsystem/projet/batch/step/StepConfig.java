@@ -1,10 +1,14 @@
 package fr.natsystem.projet.batch.step;
 
+import fr.natsystem.projet.batch.listener.BilanJobListener;
+import fr.natsystem.projet.batch.listener.NestedJobStepListener;
+import fr.natsystem.projet.services.ChecksumExtractor;
 import fr.natsystem.projet.batch.listener.AdresseSkipListener;
 import fr.natsystem.projet.batch.listener.StepProgessListener;
-import fr.natsystem.projet.batch.processor.DuplicateRulesProcessor;
 import fr.natsystem.projet.model.Adresse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.launch.JobOperator;
 import org.springframework.batch.core.listener.ChunkListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
@@ -19,8 +23,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -67,6 +69,7 @@ public class StepConfig {
                 .build();
 
     }
+    /*
     @Bean
     public Step importCsvStep(
             JobRepository repo,
@@ -87,7 +90,7 @@ public class StepConfig {
                 .listener(listener)
                 .listener(skipListener)
                 .build();
-    }
+    }*/
 
     @Bean
     public Step suppressionObsoleteStep(
@@ -174,4 +177,18 @@ public class StepConfig {
                 .tasklet(downloadTasklet, transactionManager)
                 .build();
     }
+
+    @Bean
+    public Step nestedJobStep(JobRepository repo,
+                              NestedJobStepListener Listener,
+                              PlatformTransactionManager tx,
+                              @Qualifier("jobOperator") JobOperator launcher, Job importAdresseJob) {
+        return new StepBuilder("nestedJobStep", repo)
+                .job(importAdresseJob)
+                .listener(Listener)
+                .operator(launcher)
+                .parametersExtractor(new ChecksumExtractor())
+                .build();
+    }
+
 }

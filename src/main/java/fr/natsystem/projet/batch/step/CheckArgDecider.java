@@ -1,5 +1,6 @@
 package fr.natsystem.projet.batch.step;
 
+import fr.natsystem.projet.services.ChecksumUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.springframework.batch.core.job.JobExecution;
@@ -35,10 +36,18 @@ public class CheckArgDecider implements JobExecutionDecider {
 
         if (fileExist) {
             result = new FlowExecutionStatus("OK_FILE_EXIST"); // le fichier existe et correspond à la valeur de l'argument
+            File[] files = folder.listFiles(File::isFile);
+            String checkSum = null;
+            try {
+                checkSum = ChecksumUtils.sha256(files[0].getAbsolutePath());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            jobExecution.getExecutionContext().putString("checksum", checkSum);
         } else if (count > 1) {
             result = new FlowExecutionStatus("MULTIPLE_FILES_FOUND"); // il y a au moins deux fichiers dans le dossier et aucune ne correspond à l'argument
         } else if(!retriever) {
-            result = new FlowExecutionStatus("NO_INPUT_FILE"); //  il y a 1 fichier ou 0 et le paramètre de récuperation
+            result = new FlowExecutionStatus("NO_INPUT_FILE"); //  il y a 1 fichier ou 0 et le paramètre de récuperation est désactivé
         }else if(count == 1) {
             result = new FlowExecutionStatus("MULTIPLE_FILES_FOUND"); // il y a un fichier et le paramètre de récupération est activé donc preshot de l'erreur MULTIPLE_FILES_FOUND
         }else {

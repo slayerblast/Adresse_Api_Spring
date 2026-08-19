@@ -41,4 +41,47 @@ Scénario sans argument :
 <2 fichiers dans le dossier -> 0 fichier dans le dossier -> param activé -> récupération en ligne -> fichier valide -> archivage/traitement
 <2 fichiers dans le dossier -> 0 fichier dans le dossier -> param activé -> récupération en ligne -> fichier invalide -> ERROR : NO_INPUT_FILE
 
+Étape 12 : Idempotence via JobRepository `[BATCH]`
+Pour cette étape j'ai séparé mon job en deux job, un job pour le fichier qui est un FlowJob qui s'occupe du fichier avant sont importation :
+-> localisation avec ou sans l'argument
+-> téléchargement
+-> calcule du checksum
+-> Stockage du checksum dans le jobcontext
+-> envoie à l'innerjob le cheksum en paramètre
+
+Et un InnerJob qui s'occupe du traitement du fichier.
+
+Pour la suite à savoir provoquer les exceptions JobInstanceAlreadyCompleteException et JobExecutionAlreadyRunningException,
+j'ai du rajouter dans mon JobConfig les annotations @EnableBatchProcessing et @EnableJdbcJobRepository
+pour que mon batch utilise bien JobRepository et non ResourcelessJobRepository par défaut car sans ça je ne tomberai jamais sur les exceptions en suivant les scénarios.
+Il a aussi fallu que j'ajoute dans mon schema.sql postgres les tables liées a batch :
+BATCH_STEP_EXECUTION_CONTEXT;
+BATCH_JOB_EXECUTION_CONTEXT;
+BATCH_STEP_EXECUTION;
+BATCH_JOB_EXECUTION_PARAMS;
+BATCH_JOB_EXECUTION;
+BATCH_JOB_INSTANCE;
+
+scénario JobInstanceAlreadyCompleteException :
+Pour cela j'ai lancé une premier fois avec un fichier, le batch c'est fini avec un status COMPLETED.
+J'ai lancé une deuxieme fois avec le meme fichier mais un nom différent et cette fois si je tombe sur l'exception quand j'arrive à mon innerJob, c'est le comportement prévu.
+
+scénario JobExecutionAlreadyRunningException :
+prerequie : dans application.properties mettre -> spring.main.web-application-type=none
+pour cela j'ai fais deux run configuration ou j'ai mis en argument deux memes fichiers avec deux noms différents,
+je lance le premier et quelques secondes apres le deuxieme et je tombe bien sur l'exception sur mon deuxieme lancement et d'ailleur je tombe quelque temps apres sur JobInstanceAlreadyCompleteException sur mon premier lancement
+
+etape 13 : Déclenchement via API REST `[BATCH]`
+Pour le déclenchement via API REST, j'ai créé un BatchController sur la route /api/jobs car je ne voulais pas associer l'adresseController au code batch.
+J'ai du coup utilisé @PostMapping("/batch/lancer") sans paramètre comme route pour lancer le batch et je lance mon Job principal. J'utilise swagger-ui comme interface web vu qu'on travaillait la dessus dans les étapes antérieur.
+
+Pour la partie asynchrone du jobOperator, j'ai pris le code de ce site que j'ai mis dans mon taskExecutorConfig : https://docs.spring.io/spring-batch/reference/job/configuring-operator.html
+et je l'utilise dans mon batchController sur ma variable jobOperator
+
+Pour checker l'execution d'un job precis et avoir son état en direct, j'ai dans mon BatchController j'ai créé @GetMapping("/statut/{jobExecutionId}") ou je met l'id du job executé en paramètre.
+J'ai aussi créé un record qui va me servir de DTO pour afficher les informations liées à l'état et j'utilise JobRepository pour récupérer les informations du job 
+JobExecution je = jobRepository.getJobExecution(jobExecutionId);
+Pour récupérer les exceptions spécifiques provoquées par mon innerJob comme mon job principal ne les provoque pas (JobExecutionAlreadyRunningException,JobInstanceAlreadyCompleteException)
+j'ai créé un StepExecutionListener qui est appelé dans mon JobStep ou dans l'afterStep je vais check toutes les exceptions qui ont été levé et dependant de sur laquelle des deux je tombe ou si il n'y pas d'exception, 
+je stock dans un ExecutionContext le code (202,409,423) et le codeName ("Nouvelle exécution acceptée et démarrée""JobInstanceAlreadyCompleteException","JobExecutionAlreadyRunningException")
 

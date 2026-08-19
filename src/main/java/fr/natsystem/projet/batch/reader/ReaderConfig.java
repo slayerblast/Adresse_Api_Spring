@@ -1,16 +1,13 @@
 package fr.natsystem.projet.batch.reader;
 
-import fr.natsystem.projet.batch.listener.BilanJobListener;
 import fr.natsystem.projet.batch.mapper.AdresseFieldSetMapper;
 import fr.natsystem.projet.batch.mapper.AdresseRowMapper;
 import fr.natsystem.projet.model.Adresse;
-import fr.natsystem.projet.services.ChecksumUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.infrastructure.item.database.JdbcPagingItemReader;
 import org.springframework.batch.infrastructure.item.database.Order;
 import org.springframework.batch.infrastructure.item.database.support.SqlitePagingQueryProvider;
 import org.springframework.batch.infrastructure.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.infrastructure.item.file.mapping.RecordFieldSetMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
@@ -31,14 +28,11 @@ public class ReaderConfig {
 
     @Bean
     @StepScope
-    public FlatFileItemReader<Adresse> csvDynamicReader(
-            @Value("#{jobParameters['inputFile']}") String inputFile,
-            AdresseFieldSetMapper fieldSetMapper) throws Exception {
-        if (inputFile.isBlank()) {
+    public FlatFileItemReader<Adresse> csvDynamicReader(AdresseFieldSetMapper fieldSetMapper) throws Exception {
             File folder = new File(pathFile);
             File[] files = folder.listFiles(File::isFile);
-            inputFile = files[0].getAbsolutePath();
-        }
+        String inputFile = files[0].getAbsolutePath();
+
         return new FlatFileItemReaderBuilder<Adresse>()
                 .name("csvReader")
                 .resource(new FileSystemResource(inputFile))

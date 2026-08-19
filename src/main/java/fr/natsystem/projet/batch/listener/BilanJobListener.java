@@ -49,7 +49,7 @@ public class BilanJobListener implements JobExecutionListener {
         String checksum = je.getExecutionContext().getString("checksum","");
 
         String csvError = je.getExecutionContext().getString("csvStatus", "");
-        String status = je.getExecutionContext().getString("lastDeciderStatus", "UNKNOWN");
+        String status = je.getJobParameters().getString("lastExitStatus");
         String noFile = je.getExecutionContext().getString("noFile", "");
         log.info("Job {} : {}", je.getJobInstance()
                 .getJobName(), je.getStatus());

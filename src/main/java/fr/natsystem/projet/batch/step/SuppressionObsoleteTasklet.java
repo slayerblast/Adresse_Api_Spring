@@ -41,12 +41,12 @@ public class SuppressionObsoleteTasklet implements Tasklet {
         bilanJobListener.setObsolete(deleted);
 
         log.info("{} adresses obsolètes supprimées", bilanJobListener.getObsolete());
-        jdbcTemplate.execute(
-                """
-                DROP TABLE adresse_staging;
-                """
-        );
-
+        jdbcTemplate.execute("""
+        DROP INDEX IF EXISTS idx_staging_paging;
+        DROP INDEX IF EXISTS idx_staging_key;
+        TRUNCATE TABLE adresse_staging;
+        """);
+        
         return RepeatStatus.FINISHED;
     }
 
