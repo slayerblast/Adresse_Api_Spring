@@ -120,4 +120,31 @@ public class AdresseRepositoryPostgres implements AdresseRepository {
                 search
         );
     }
+
+    @Override
+    public List<Adresse> findProches(double lat, double lon) {
+
+        String sql = """
+        SELECT *,
+               ST_Distance(
+                   position,
+                   ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography
+               ) AS distance
+        FROM adresse
+        WHERE ST_DWithin(
+            position,
+            ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
+            50
+        )
+        ORDER BY distance
+        LIMIT 1
+        """;
+
+        return jdbcTemplate.query(
+                sql,
+                adresseRowMapper,
+                lon, lat,
+                lon, lat
+        );
+    }
 }

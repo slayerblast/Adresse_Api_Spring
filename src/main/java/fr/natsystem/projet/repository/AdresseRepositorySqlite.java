@@ -131,4 +131,9 @@ public class AdresseRepositorySqlite implements AdresseRepository {
         );
     }
 
+    @Override
+    public List<Adresse> findProches(double lat, double lon) {
+        return List.of();
+    }
+
 }

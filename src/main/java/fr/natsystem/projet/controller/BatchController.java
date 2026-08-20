@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/jobs")
 public class BatchController {
 
-   // @Qualifier("JobTaskExecutor")
+
     private final JobOperator jobOperator;
 
     private final JobRepository jobRepository;
@@ -36,7 +36,6 @@ public class BatchController {
 
     @PostMapping("/batch/lancer")
     public ResponseEntity<?> startJob() {
-
 
         JobParameters params = new JobParametersBuilder()
                 .addString("inputFile", "")
@@ -49,7 +48,6 @@ public class BatchController {
             log.info("job on error");
             return ResponseEntity.internalServerError()
                     .body(e.getMessage());
-
         }
     }
 

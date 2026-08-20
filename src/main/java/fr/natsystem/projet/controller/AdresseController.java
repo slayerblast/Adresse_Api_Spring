@@ -20,7 +20,7 @@ import java.util.List;
 
 @Slf4j
 @Tag(name = "Adresses", description = "Recherche dans le référentiel local BAN")
-@CrossOrigin(origins = "http://localhost:4200/")
+@CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/api/adresses")
 @RequiredArgsConstructor
@@ -28,6 +28,13 @@ public class AdresseController {
 
     private final AdresseService service;
 
+    @GetMapping("/proches")
+    public List<Adresse> trouverAdressesProches(
+            @RequestParam double lat,
+            @RequestParam double lon) {
+
+        return service.trouverAdressesProches(lat, lon);
+    }
     @Operation(
             summary = "Recherche d'adresses",
             description = """

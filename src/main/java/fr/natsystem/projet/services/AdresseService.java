@@ -29,4 +29,8 @@ public class AdresseService {
     public List<Adresse> autoComplete(String q) {
         return repository.autoComplete(q);
     }
+
+    public List<Adresse> trouverAdressesProches(double lat, double lon) {
+        return repository.findProches(lat, lon);
+    }
 }
