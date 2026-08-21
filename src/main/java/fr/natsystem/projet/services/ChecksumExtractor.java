@@ -1,6 +1,5 @@
 package fr.natsystem.projet.services;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.job.parameters.JobParameters;
@@ -28,6 +27,7 @@ public class ChecksumExtractor implements JobParametersExtractor {
         return new JobParametersBuilder()
                 .addString("checksum", checksum,true)
                 .addString("lastExitStatus", exitStatus)
+                .addLong("jobExecutionId",stepExecution.getJobExecution().getId())
                 .toJobParameters();
     }
 }

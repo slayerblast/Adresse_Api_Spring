@@ -7,6 +7,7 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListener;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.StepExecution;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -33,6 +34,7 @@ public class BilanJobListener implements JobExecutionListener {
     private final AtomicLong doublonPur = new AtomicLong(0);
     private int obsolete = 0;
     private final AdresseSkipListener skipListener;
+    private final JobRepository jobRepository;
     private String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 
     @Value("${spring.batch.bilanDir}")
@@ -47,17 +49,18 @@ public class BilanJobListener implements JobExecutionListener {
     @Override
     public void afterJob(JobExecution je) {
         String checksum = je.getExecutionContext().getString("checksum","");
-
+        long parentJobId = je.getJobParameters().getLong("jobExecutionId");
+        log.info("Job id parent {} ", parentJobId);
         String csvError = je.getExecutionContext().getString("csvStatus", "");
         String status = je.getJobParameters().getString("lastExitStatus");
         String noFile = je.getExecutionContext().getString("noFile", "");
-        log.info("Job {} : {}", je.getJobInstance()
-                .getJobName(), je.getStatus());
+        JobExecution parentExecution = jobRepository.getJobExecution(parentJobId);
+        log.info("Job {} : {}", je.getJobInstance().getJobName(), je.getStatus());
 
 
         try (FileWriter writer = new FileWriter(bilanDir+"rapport_"+je.getJobInstance().getJobName()+"_"+timestamp+".txt")) {
             Duration jobDuration = Duration.between(
-                    je.getStartTime(),
+                    parentExecution.getStartTime(),
                     je.getEndTime()
             );
 
@@ -67,13 +70,14 @@ public class BilanJobListener implements JobExecutionListener {
             // ============================
 
             writer.write("=== STATUS DU JOB ===\n\n");
+            writer.write("Job parent : " + parentExecution.getJobInstance().getJobName() + "\n");
             writer.write("Status : " + je.getStatus() + "\n");
             if (!csvError.isEmpty()) {
                 writer.write("ExitStatus : " + csvError + "\n\n");
             } else {
                 writer.write("ExitStatus : " + status + "\n\n");
             }
-            writer.write("Début : " + je.getStartTime() + "\n");
+            writer.write("Début : " + parentExecution.getStartTime() + "\n");
             writer.write("Fin    : " + je.getEndTime() + "\n");
             writer.write("Durée totale : " + jobDuration.toSeconds() + " secondes\n\n");
 
@@ -109,7 +113,7 @@ public class BilanJobListener implements JobExecutionListener {
                         .findFirst().orElse(null);
                 if (importSet != null) {
                     writer.write("=== BILAN IMPORT CSV -> STAGING ===\n\n");
-                    writer.write("checksum du fichier : " + checksum + "\n");
+                    writer.write("checksum du fichier : " + checksum + "\n\n");
                     //writer.write("ReadCount  : " + importSet.getReadCount() + "\n");
                     //writer.write("WriteCount : " + importSet.getWriteCount() + "\n");
                     //writer.write("Lignes qui n'ont pas passé le BeanValidation : " + importSet.getFilterCount() + "\n");
