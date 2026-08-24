@@ -34,12 +34,13 @@ public class BatchController {
     private final Job checkFileJob;
 
 
-    @PostMapping("/batch/lancer")
-    public ResponseEntity<?> startJob() {
+    @PostMapping("/batch/lancer/{innerJob}")
+    public ResponseEntity<?> startJob(@PathVariable("innerJob") String innerJob) {
 
         JobParameters params = new JobParametersBuilder()
                 .addString("inputFile", "")
                 .addLong("startAt", System.currentTimeMillis())
+                .addString("innerJob", innerJob)
                 .toJobParameters();
         try {
             JobExecution je = jobOperator.start(checkFileJob, params);

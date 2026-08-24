@@ -46,6 +46,24 @@ public class JobConfig {
                 .build();
     }
 
+    @Bean
+    public Job jobImportDvf(JobRepository jobRepository, Step masterStep,
+                                BilanJobListener listener,
+                                Step createStagingIndexStep,
+                                Step suppressionObsoleteStep,
+                                Step createAdresseIndexStep,
+                                Step csvToStagingStep,
+                                Step checksumStep) {
+        return new JobBuilder("importAdresseJob", jobRepository)
+                .listener(listener)
+                .start(csvToStagingStep)
+                .next(createStagingIndexStep)
+                .next(masterStep)
+                .next(suppressionObsoleteStep)
+                .next(createAdresseIndexStep)
+                .next(checksumStep)
+                .build();
+    }
 
     @Bean
     public Job checkFileJob(JobRepository jobRepository,
