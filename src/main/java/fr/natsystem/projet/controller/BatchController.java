@@ -1,6 +1,7 @@
 package fr.natsystem.projet.controller;
 
 import fr.natsystem.projet.model.JobStatusResponse;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,13 @@ public class BatchController {
 
 
     @PostMapping("/batch/lancer/{innerJob}")
-    public ResponseEntity<?> startJob(@PathVariable("innerJob") String innerJob) {
+    public ResponseEntity<?> startJob(
+            @Parameter(description = """
+                    Choisissez entre :
+                    - importAdresseJob
+                    - importDvfJob
+                    """)
+            @PathVariable("innerJob") String innerJob) {
 
         JobParameters params = new JobParametersBuilder()
                 .addString("inputFile", "")

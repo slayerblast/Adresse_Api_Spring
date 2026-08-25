@@ -1,4 +1,4 @@
-package fr.natsystem.projet.batch.step;
+package fr.natsystem.projet.batch.Decider;
 
 
 import fr.natsystem.projet.services.ChecksumUtils;

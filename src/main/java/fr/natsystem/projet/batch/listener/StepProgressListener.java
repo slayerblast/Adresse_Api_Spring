@@ -1,6 +1,7 @@
 package fr.natsystem.projet.batch.listener;
 
 import fr.natsystem.projet.services.AdresseCacheService;
+import fr.natsystem.projet.services.DvfCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.listener.StepExecutionListener;
@@ -12,8 +13,9 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class StepProgessListener implements StepExecutionListener {
+public class StepProgressListener implements StepExecutionListener {
     private final AdresseCacheService adresseCacheService;
+    private final DvfCacheService  dvfCacheService;
     @Override
     public void beforeStep(StepExecution s) {
 
@@ -21,8 +23,17 @@ public class StepProgessListener implements StepExecutionListener {
                 s.getExecutionContext()
                         .getString("codeInsee");
 
+        if(s.getJobExecution().getJobInstance().getJobName().equals("importAdresseJob")) {
+            log.info("steplistener 1er if");
+            adresseCacheService.load(codeInsee);
+        }else if(s.getJobExecution().getJobInstance().getJobName().equals("importDvfJob")) {
+            log.info("steplistener 2er if");
+            dvfCacheService.load(codeInsee);
+        }else {
+            log.info("steplistener else");
+            adresseCacheService.load(codeInsee);
+        }
 
-        adresseCacheService.load(codeInsee);
     }
 
     @Override

@@ -1,10 +1,13 @@
 package fr.natsystem.projet.batch.step;
 
-import fr.natsystem.projet.batch.listener.BilanJobListener;
+import fr.natsystem.projet.batch.Partitioner.CodeInseePartitioner;
+import fr.natsystem.projet.batch.Partitioner.DvfPartitioner;
+import fr.natsystem.projet.batch.listener.DvfSkipListener;
 import fr.natsystem.projet.batch.listener.NestedJobStepListener;
+import fr.natsystem.projet.model.Dvf;
 import fr.natsystem.projet.services.ChecksumExtractor;
 import fr.natsystem.projet.batch.listener.AdresseSkipListener;
-import fr.natsystem.projet.batch.listener.StepProgessListener;
+import fr.natsystem.projet.batch.listener.StepProgressListener;
 import fr.natsystem.projet.model.Adresse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
@@ -15,8 +18,8 @@ import org.springframework.batch.core.step.Step;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.infrastructure.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.infrastructure.item.database.JdbcPagingItemReader;
-import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
 import org.springframework.batch.infrastructure.item.support.CompositeItemProcessor;
+import org.springframework.batch.infrastructure.item.validator.ValidatingItemProcessor;
 import org.springframework.batch.infrastructure.item.validator.ValidationException;
 import org.springframework.batch.infrastructure.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -51,7 +54,7 @@ public class StepConfig {
             @Qualifier("jdbcWriter")
             JdbcBatchItemWriter<Adresse> jdbcWriter,
             CompositeItemProcessor <Adresse, Adresse> compositeCsvProcessor,
-            StepProgessListener listener,
+            StepProgressListener listener,
             AdresseSkipListener skipListener,
             ChunkListener MetricChunkListener) {
         return new StepBuilder("importAdresseStep", repo)
@@ -59,6 +62,33 @@ public class StepConfig {
                 .transactionManager(tx)
                 .reader(stagingReader)
                 .processor(compositeCsvProcessor)
+                .writer(jdbcWriter)
+                .faultTolerant()
+                .skip(ValidationException.class)
+                .skipLimit(Integer.MAX_VALUE)
+                .listener(listener)
+                .listener(skipListener)
+                .listener(MetricChunkListener)
+                .build();
+
+    }
+
+    @Bean
+    public Step importDvfStep(
+            JobRepository repo,
+            PlatformTransactionManager tx,
+            JdbcPagingItemReader<Dvf> stagingReaderDvf,
+            @Qualifier("jdbcWriterDvf")
+            JdbcBatchItemWriter<Dvf> jdbcWriter,
+            ValidatingItemProcessor<Dvf> validatingProcessorDvf,
+            StepProgressListener listener,
+            DvfSkipListener skipListener,
+            ChunkListener MetricChunkListener) {
+        return new StepBuilder("importDvfStep", repo)
+                .<Dvf, Dvf>chunk(1000)
+                .transactionManager(tx)
+                .reader(stagingReaderDvf)
+                .processor(validatingProcessorDvf)
                 .writer(jdbcWriter)
                 .faultTolerant()
                 .skip(ValidationException.class)
@@ -143,14 +173,28 @@ public class StepConfig {
     }
 
     @Bean
-    public Step masterStep(JobRepository repo,
+    public Step masterStepAdresse(JobRepository repo,
                            CodeInseePartitioner partitioner,
                            Step importAdresseStep,
                            @Qualifier("batchTaskExecutor")
                            TaskExecutor taskExecutor) {
-        return new StepBuilder("masterStep", repo)
+        return new StepBuilder("masterStepAdresse", repo)
                 .partitioner("importAdresseStep", partitioner)
                 .step(importAdresseStep)       // step template pour chaque worker
+                .gridSize(workerSize)
+                .taskExecutor(taskExecutor)
+                .build();
+    }
+
+    @Bean
+    public Step masterStepDvf(JobRepository repo,
+                           DvfPartitioner partitioner,
+                           Step importDvfStep,
+                           @Qualifier("batchTaskExecutor")
+                           TaskExecutor taskExecutor) {
+        return new StepBuilder("masterStepDvf", repo)
+                .partitioner("importDvfStep", partitioner)
+                .step(importDvfStep)       // step template pour chaque worker
                 .gridSize(workerSize)
                 .taskExecutor(taskExecutor)
                 .build();
@@ -179,12 +223,24 @@ public class StepConfig {
     }
 
     @Bean
-    public Step nestedJobStep(JobRepository repo,
-                              NestedJobStepListener Listener,
-                              PlatformTransactionManager tx,
-                              @Qualifier("jobOperator") JobOperator launcher, Job importAdresseJob) {
-        return new StepBuilder("nestedJobStep", repo)
+    public Step adresseJobStep(JobRepository repo,
+                               NestedJobStepListener Listener,
+                               PlatformTransactionManager tx,
+                               @Qualifier("jobOperator") JobOperator launcher, Job importAdresseJob) {
+        return new StepBuilder("adresseJobStep", repo)
                 .job(importAdresseJob)
+                .listener(Listener)
+                .operator(launcher)
+                .parametersExtractor(new ChecksumExtractor())
+                .build();
+    }
+    @Bean
+    public Step dvfJobStep(JobRepository repo,
+                               NestedJobStepListener Listener,
+                               PlatformTransactionManager tx,
+                               @Qualifier("jobOperator") JobOperator launcher, Job importDvfJob) {
+        return new StepBuilder("dvfJobStep", repo)
+                .job(importDvfJob)
                 .listener(Listener)
                 .operator(launcher)
                 .parametersExtractor(new ChecksumExtractor())

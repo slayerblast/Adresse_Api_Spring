@@ -34,6 +34,7 @@ public class BilanJobListener implements JobExecutionListener {
     private final AtomicLong doublonPur = new AtomicLong(0);
     private int obsolete = 0;
     private final AdresseSkipListener skipListener;
+    private final DvfSkipListener dvfSkipListener;
     private final JobRepository jobRepository;
     private String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 
@@ -88,7 +89,7 @@ public class BilanJobListener implements JobExecutionListener {
                 // ============================
                 writer.write("=== BILAN DES TEMPS PAR ETAPES ===\n");
                 for (StepExecution step : je.getStepExecutions()) {
-                    if (step.getStepName().startsWith("importAdresseStep:") || step.getStepName().startsWith("checksumStep:") ) {
+                    if (step.getStepName().startsWith("importAdresseStep:") || step.getStepName().startsWith("checksumStep:") || step.getStepName().startsWith("importDvfStep:") ) {
                         continue;
                     }
                     Duration stepDuration = Duration.between(
@@ -124,7 +125,8 @@ public class BilanJobListener implements JobExecutionListener {
                     // ============================
 
                     importSet = je.getStepExecutions().stream()
-                            .filter(s -> s.getStepName().equals("masterStep"))
+                            .filter(s -> s.getStepName().equals("masterStep")
+                                    || s.getStepName().equals("masterStepDvf"))
                             .findFirst().orElse(null);
                     if (importSet != null) {
 
@@ -133,7 +135,13 @@ public class BilanJobListener implements JobExecutionListener {
                         writer.write("WriteCount : " + importSet.getWriteCount() + "\n");
                         writer.write("Doublons pur : " + doublonPur + "\n");
                         writer.write("Lignes en double : " + doublon + "\n");
-                        writer.write("Nombre d'ID rejetés : " + skipListener.getIdsRejetes().size() + "\n\n");
+                        if (importSet.getJobExecution().getJobInstance().getJobName().equals("importAdresseJob")){
+                            writer.write("Nombre d'ID rejetés : " + skipListener.getIdsRejetes().size() + "\n\n");
+                        }else if (importSet.getJobExecution().getJobInstance().getJobName().equals("importDvfJob")){
+                            writer.write("Nombre d'ID rejetés : " + dvfSkipListener.getIdsRejetes().size() + "\n\n");
+                        }else {
+                            writer.write("Nombre d'ID rejetés : " + skipListener.getIdsRejetes().size() + "\n\n");
+                        }
                         writer.write("Lignes obsolète supprimées: " + obsolete + "\n\n");
                     }
                 }
@@ -145,6 +153,7 @@ public class BilanJobListener implements JobExecutionListener {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
 
         // ============================
         // BILAN DES ERREURS
@@ -192,6 +201,19 @@ public class BilanJobListener implements JobExecutionListener {
             throw new RuntimeException(e);
         }
 
+        try (FileWriter writer = new FileWriter(bilanDir+"rapport_rejetés_"+je.getJobInstance().getJobName()+"_"+timestamp+".txt")) {
+            writer.write("=== BILAN DES LIGNES REJETÉS ===\n\n");
+            writer.write("Nombre de ligne ");
+            dvfSkipListener.getIdsRejetes().forEach(id -> {
+                try {
+                    writer.write(id+"\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         /*
         for (StepExecution stepExecution : je.getStepExecutions()) {
 

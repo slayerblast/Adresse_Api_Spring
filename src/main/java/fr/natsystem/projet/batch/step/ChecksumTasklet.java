@@ -32,7 +32,9 @@ public class ChecksumTasklet implements Tasklet {
 
     @Override
     public @Nullable RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        String innerJobParent = contribution.getStepExecution().getJobParameters().getString("innerJob");
         File folder = new File(pathFile);
+        Path destination = null;
         File[] files = folder.listFiles(File::isFile);
         checkSum = ChecksumUtils.sha256(files[0].getAbsolutePath());
         contribution.getStepExecution()
@@ -40,7 +42,17 @@ public class ChecksumTasklet implements Tasklet {
                 .getExecutionContext()
                 .putString("checksum", checkSum);
         Path source = Paths.get(files[0].getAbsolutePath());
-        Path destination = Paths.get(archiveDir).resolve(timestamp+"_adresse.csv");
+        if (innerJobParent.equals("importAdresseJob"))
+        {
+            destination = Paths.get(archiveDir).resolve(timestamp+"_adresse.csv");
+        }
+        else if (innerJobParent.equals("importDvfJob"))
+        {
+            destination = Paths.get(archiveDir).resolve(timestamp+"_dvf.csv");
+        } else {
+            destination = Paths.get(archiveDir).resolve(timestamp+"_adresse.csv");
+        }
+
         Files.move(
                 source,
                 destination,

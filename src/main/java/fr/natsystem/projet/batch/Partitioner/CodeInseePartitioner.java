@@ -1,4 +1,4 @@
-package fr.natsystem.projet.batch.step;
+package fr.natsystem.projet.batch.Partitioner;
 
 
 import lombok.RequiredArgsConstructor;
@@ -19,6 +19,7 @@ public class CodeInseePartitioner implements Partitioner {
 
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {
+
 
         List<String> codes = jdbcTemplate.queryForList(
                 """
