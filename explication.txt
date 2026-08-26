@@ -85,3 +85,5 @@ Pour récupérer les exceptions spécifiques provoquées par mon innerJob comme 
 j'ai créé un StepExecutionListener qui est appelé dans mon JobStep ou dans l'afterStep je vais check toutes les exceptions qui ont été levé et dependant de sur laquelle des deux je tombe ou si il n'y pas d'exception, 
 je stock dans un ExecutionContext le code (202,409,423) et le codeName ("Nouvelle exécution acceptée et démarrée""JobInstanceAlreadyCompleteException","JobExecutionAlreadyRunningException")
 
+Etape 16 :
+Pour cette étape, comme il était demandé de garder la même logique : job de téléchargement -> job de traitement, j'ai aussi voulu garder la meme logique du job de traitement ce qui m'a fait dupliquer pas mal de class. j'ai du changer l'API POST /api/jobs/batch/lancer en /api/jobs/batch/lancer/{innerJob} car maintenant l'utilisateur doit indiquer quel innerJob lancer.
