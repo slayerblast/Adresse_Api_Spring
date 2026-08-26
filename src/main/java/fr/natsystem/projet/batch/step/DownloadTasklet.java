@@ -17,8 +17,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DownloadTasklet implements Tasklet {
 
-    @Value("${spring.batch.urlPathFile}")
-    private String url;
+    @Value("${spring.batch.urlPathFileAdresse}")
+    private String urlAdresse;
+
+    @Value("${spring.batch.urlPathFileDvf}")
+    private String urlDvf;
 
     private final FileDownloadService fileDownloadService;
 
@@ -26,8 +29,16 @@ public class DownloadTasklet implements Tasklet {
     public RepeatStatus execute(
             StepContribution contribution,
             ChunkContext chunkContext) throws Exception {
+        String job = contribution.getStepExecution().getJobExecution().getJobInstance().getJobName();
+        String csvPath ="";
+        if (job.equals("importAdresseJob")) {
+            csvPath = fileDownloadService.downloadAndUngzip(urlAdresse);
+        } else if (job.equals("importDvfJob")) {
+            csvPath = fileDownloadService.downloadAndUngzip(urlDvf);
+        }else {
+            csvPath = fileDownloadService.downloadAndUngzip(urlAdresse);
+        }
 
-        String csvPath = fileDownloadService.downloadAndUngzip(url);
         if (csvPath.isBlank()) {
             chunkContext.getStepContext()
                     .getStepExecution()

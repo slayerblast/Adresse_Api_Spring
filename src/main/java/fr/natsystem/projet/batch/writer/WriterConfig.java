@@ -79,7 +79,6 @@ public class WriterConfig {
     @Profile("postgres")
     public JdbcBatchItemWriter<Dvf> jdbcPostgresWriterDvf(
             DataSource ds) {
-        log.info("========================= jdbcPostgresWriterDvf");
         return new JdbcBatchItemWriterBuilder<Dvf>()
                 .dataSource(ds)
                 .sql("""   
