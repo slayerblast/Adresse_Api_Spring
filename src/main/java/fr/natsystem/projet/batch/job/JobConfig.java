@@ -48,8 +48,7 @@ public class JobConfig {
     public Job importDvfJob(JobRepository jobRepository, Step masterStepDvf,
                                 BilanJobListener listener,
                                 Step createStagingIndexStep,
-                                Step suppressionObsoleteStep,
-                                Step createAdresseIndexStep,
+                                Step dvfSqlRequestStep,
                                 Step csvToStagingStep,
                                 Step checksumStep) {
         return new JobBuilder("importDvfJob", jobRepository)
@@ -58,6 +57,7 @@ public class JobConfig {
                 .next(createStagingIndexStep)
                 .next(masterStepDvf)
                 .next(checksumStep)
+                .next(dvfSqlRequestStep)
                 .build();
     }
 

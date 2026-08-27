@@ -29,11 +29,11 @@ public class DownloadTasklet implements Tasklet {
     public RepeatStatus execute(
             StepContribution contribution,
             ChunkContext chunkContext) throws Exception {
-        String job = contribution.getStepExecution().getJobExecution().getJobInstance().getJobName();
+        String innerJob = contribution.getStepExecution().getJobExecution().getJobParameters().getString("innerJob");
         String csvPath ="";
-        if (job.equals("importAdresseJob")) {
+        if (innerJob.equals("importAdresseJob")) {
             csvPath = fileDownloadService.downloadAndUngzip(urlAdresse);
-        } else if (job.equals("importDvfJob")) {
+        } else if (innerJob.equals("importDvfJob")) {
             csvPath = fileDownloadService.downloadAndUngzip(urlDvf);
         }else {
             csvPath = fileDownloadService.downloadAndUngzip(urlAdresse);

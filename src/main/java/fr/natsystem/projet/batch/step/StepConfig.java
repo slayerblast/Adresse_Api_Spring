@@ -223,6 +223,17 @@ public class StepConfig {
     }
 
     @Bean
+    public Step dvfSqlRequestStep(JobRepository jobRepository,
+                             PlatformTransactionManager transactionManager,
+                          DvfSqlRequestTasklet dvfSqlRequestTasklet ) {
+
+        return new StepBuilder("dvfSqlRequestStep", jobRepository)
+                .tasklet(dvfSqlRequestTasklet, transactionManager)
+                .build();
+    }
+
+
+    @Bean
     public Step adresseJobStep(JobRepository repo,
                                NestedJobStepListener Listener,
                                PlatformTransactionManager tx,

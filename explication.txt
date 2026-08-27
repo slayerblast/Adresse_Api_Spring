@@ -85,5 +85,27 @@ Pour récupérer les exceptions spécifiques provoquées par mon innerJob comme 
 j'ai créé un StepExecutionListener qui est appelé dans mon JobStep ou dans l'afterStep je vais check toutes les exceptions qui ont été levé et dependant de sur laquelle des deux je tombe ou si il n'y pas d'exception, 
 je stock dans un ExecutionContext le code (202,409,423) et le codeName ("Nouvelle exécution acceptée et démarrée""JobInstanceAlreadyCompleteException","JobExecutionAlreadyRunningException")
 
-Etape 16 :
-Pour cette étape, comme il était demandé de garder la même logique : job de téléchargement -> job de traitement, j'ai aussi voulu garder la meme logique du job de traitement ce qui m'a fait dupliquer pas mal de class. j'ai du changer l'API POST /api/jobs/batch/lancer en /api/jobs/batch/lancer/{innerJob} car maintenant l'utilisateur doit indiquer quel innerJob lancer.
+Etape 16 : Intégrer la DVF `[BATCH]`
+Pour cette étape, comme il était demandé de garder la même logique : job de téléchargement -> job de traitement, j'ai aussi voulu garder la meme logique du job de traitement ce qui m'a fait dupliquer pas mal de class.
+j'ai du changer l'API POST /api/jobs/batch/lancer en /api/jobs/batch/lancer/{innerJob} car maintenant l'utilisateur doit indiquer quel innerJob lancer.
+
+Etape 17 : Agrégation d'un tarif moyen par commune `[BATCH]`
+Pour cela j'ai décidé de créer une table Tarif_Commune qui contient les données aggrégées, et dans mon batch j'ai un tasklet avec la requete d'aggregation avec les regles suivantes :
+- Le code_commune ne doit pas être NULL.
+- L’id_mutation ne doit pas être NULL.
+- La date_mutation ne doit pas être NULL.
+- La valeur_fonciere ne doit pas être NULL et doit être supérieure à 0.
+- La surface_reelle_bati ne doit pas être NULL et doit être supérieure à 0.
+- Seuls les types de locaux Appartement et Maison sont pris en compte.
+- Seuls les nature mutation correspondant au Vente son prix en compte
+- La période N correspond aux 12 derniers mois disponibles dans DVF.
+- La période N-1 correspond aux 12 mois précédant la période N.
+- Les calculs sont regroupés par code_insee.
+- Le prix moyen est calculé avec la moyenne des valeur_fonciere.
+- Le prix médian correspond à la médiane des valeur_fonciere.
+- Le prix au m² est calculé avec : Somme des valeurs foncières / Somme des surfaces bâties
+- Le nombre de transactions correspond au nombre d’id_mutation distincts.
+- Les variations comparent les résultats de N à ceux de N-1 en pourcentage.
+
+J'ai aussi créé un repository, un service et un model pour Tarif_Commune pour mettre la methode qui va me faire la recherche de la tarification de commune sur le code insee en entré
+ 

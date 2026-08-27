@@ -1,7 +1,10 @@
 package fr.natsystem.projet.controller;
 
 import fr.natsystem.projet.model.Adresse;
+import fr.natsystem.projet.model.Dvf;
+import fr.natsystem.projet.model.TarifCommune;
 import fr.natsystem.projet.services.AdresseService;
+import fr.natsystem.projet.services.TarifCommuneService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,9 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Tag(name = "Adresses", description = "Recherche dans le référentiel local BAN")
@@ -27,6 +32,14 @@ import java.util.List;
 public class AdresseController {
 
     private final AdresseService service;
+    private final TarifCommuneService tarifCommuneService;
+
+    @GetMapping("/communes/{code_insee}/tarif")
+    public Optional<TarifCommune> getTarifCommune(
+            @RequestParam @PathVariable String codeInsee
+    ) {
+        return tarifCommuneService.findByCodeInsee(codeInsee);
+    }
 
     @GetMapping("/proches")
     public List<Adresse> trouverAdressesProches(
@@ -35,15 +48,16 @@ public class AdresseController {
 
         return service.trouverAdressesProches(lat, lon);
     }
+
     @Operation(
             summary = "Recherche d'adresses",
             description = """
-                Recherche une ou plusieurs adresses selon
-                le code postal,
-                le nom de voie
-                et la commune.
-                Les critères sont combinables.
-                """
+                    Recherche une ou plusieurs adresses selon
+                    le code postal,
+                    le nom de voie
+                    et la commune.
+                    Les critères sont combinables.
+                    """
     )
     @ApiResponse(
             responseCode = "200",
@@ -53,28 +67,28 @@ public class AdresseController {
                     schema = @Schema(implementation = Page.class),
                     examples = @ExampleObject(
                             value = """
-                            {
-                              "content": [
-                                {
-                                  "id": "75115_2830_00001",
-                                  "numero": "1",
-                                  "nom_voie": "Rue du Docteur Finlay",
-                                  "code_postal": "75015",
-                                  "code_insee": "75115",
-                                  "nom_commune": "Paris 15e Arrondissement",
-                                  "lat": 48.85286,
-                                  "lon": 2.286846
-                                }
-                              ],
-                              "pageable": {
-                                "pageNumber": 0,
-                                "pageSize": 20
-                              },
-                              "totalElements": 57,
-                              "totalPages": 3,
-                              "number": 0
-                            }
-                            """
+                                    {
+                                      "content": [
+                                        {
+                                          "id": "75115_2830_00001",
+                                          "numero": "1",
+                                          "nom_voie": "Rue du Docteur Finlay",
+                                          "code_postal": "75015",
+                                          "code_insee": "75115",
+                                          "nom_commune": "Paris 15e Arrondissement",
+                                          "lat": 48.85286,
+                                          "lon": 2.286846
+                                        }
+                                      ],
+                                      "pageable": {
+                                        "pageNumber": 0,
+                                        "pageSize": 20
+                                      },
+                                      "totalElements": 57,
+                                      "totalPages": 3,
+                                      "number": 0
+                                    }
+                                    """
                     )
             )
     )
@@ -95,18 +109,18 @@ public class AdresseController {
         log.info("page={}", pageable.getPageNumber());
         log.info("page={}", pageable.getPageSize());
         log.info("offset={}", pageable.getOffset());
-        return service.rechercher( codePostal, rue, commune, pageable);
+        return service.rechercher(codePostal, rue, commune, pageable);
     }
 
     @Operation(
             summary = "Recherche d'adresses dynamique",
             description = """
-                Recherche une ou plusieurs adresses selon
-                le code postal,
-                le nom de voie
-                et la commune.
-                et affiche le résultat en direct
-                """
+                    Recherche une ou plusieurs adresses selon
+                    le code postal,
+                    le nom de voie
+                    et la commune.
+                    et affiche le résultat en direct
+                    """
     )
     @ApiResponse(
             responseCode = "200",
@@ -116,28 +130,28 @@ public class AdresseController {
                     schema = @Schema(implementation = Page.class),
                     examples = @ExampleObject(
                             value = """
-                            {
-                              "content": [
-                                {
-                                  "id": "75115_2830_00019",
-                                  "numero": "19",
-                                  "nom_voie": "Rue du Docteur Finlay",
-                                  "code_postal": "75015",
-                                  "code_insee": "75115",
-                                  "nom_commune": "Paris 15e Arrondissement",
-                                  "lat": 48.852277,
-                                  "lon": 2.288622
-                                }
-                              ],
-                              "pageable": {
-                                "pageNumber": 0,
-                                "pageSize": 20
-                              },
-                              "totalElements": 1,
-                              "totalPages": 1,
-                              "number": 0
-                            }
-                            """
+                                    {
+                                      "content": [
+                                        {
+                                          "id": "75115_2830_00019",
+                                          "numero": "19",
+                                          "nom_voie": "Rue du Docteur Finlay",
+                                          "code_postal": "75015",
+                                          "code_insee": "75115",
+                                          "nom_commune": "Paris 15e Arrondissement",
+                                          "lat": 48.852277,
+                                          "lon": 2.288622
+                                        }
+                                      ],
+                                      "pageable": {
+                                        "pageNumber": 0,
+                                        "pageSize": 20
+                                      },
+                                      "totalElements": 1,
+                                      "totalPages": 1,
+                                      "number": 0
+                                    }
+                                    """
                     )
             )
     )

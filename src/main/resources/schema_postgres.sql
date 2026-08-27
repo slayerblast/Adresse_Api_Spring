@@ -220,6 +220,62 @@ CREATE TABLE IF NOT EXISTS BATCH_JOB_EXECUTION_CONTEXT (
         REFERENCES BATCH_JOB_EXECUTION(JOB_EXECUTION_ID)
 );
 
+CREATE TABLE IF NOT EXISTS tarif_commune (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+
+    code_insee VARCHAR(5) NOT NULL,
+
+    -- Indicateurs de la période N
+    prix_moyen NUMERIC(15, 2),
+    prix_median NUMERIC(15, 2),
+    prix_m2 NUMERIC(15, 2),
+    nombre_transactions BIGINT NOT NULL DEFAULT 0,
+
+    -- Indicateurs de la période N-1
+    prix_moyen_n_1 NUMERIC(15, 2),
+    prix_median_n_1 NUMERIC(15, 2),
+    prix_m2_n_1 NUMERIC(15, 2),
+    nombre_transactions_n_1 BIGINT NOT NULL DEFAULT 0,
+
+    -- Variations entre N et N-1, en pourcentage
+    variation_prix_moyen_pct NUMERIC(10, 2),
+    variation_prix_median_pct NUMERIC(10, 2),
+    variation_prix_m2_pct NUMERIC(10, 2),
+    variation_nombre_transactions_pct NUMERIC(10, 2),
+
+    -- Bornes temporelles utilisées pour le calcul
+    date_debut_periode_n DATE NOT NULL,
+    date_fin_periode_n DATE NOT NULL,
+    date_debut_periode_n_1 DATE NOT NULL,
+    date_fin_periode_n_1 DATE NOT NULL,
+
+    -- Date de dernière exécution du calcul
+    date_calcul TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+    CONSTRAINT ck_tarif_commune_code_insee CHECK (code_insee::text ~ '^[0-9A-Z]{5}$'::text),
+    CONSTRAINT ck_tarif_commune_periode_n CHECK (date_debut_periode_n < date_fin_periode_n),
+    CONSTRAINT ck_tarif_commune_periode_n_1 CHECK (date_debut_periode_n_1 < date_fin_periode_n_1),
+    CONSTRAINT ck_tarif_commune_periodes_successives CHECK ((date_fin_periode_n_1 + 1) = date_debut_periode_n),
+    CONSTRAINT ck_tarif_commune_prix_m2 CHECK (prix_m2 IS NULL OR prix_m2 > 0::numeric),
+    CONSTRAINT ck_tarif_commune_prix_m2_n_1 CHECK (prix_m2_n_1 IS NULL OR prix_m2_n_1 > 0::numeric),
+    CONSTRAINT ck_tarif_commune_prix_median CHECK (prix_median IS NULL OR prix_median > 0::numeric),
+    CONSTRAINT ck_tarif_commune_prix_median_n_1 CHECK (prix_median_n_1 IS NULL OR prix_median_n_1 > 0::numeric),
+    CONSTRAINT ck_tarif_commune_prix_moyen CHECK (prix_moyen IS NULL OR prix_moyen > 0::numeric),
+    CONSTRAINT ck_tarif_commune_prix_moyen_n_1 CHECK (prix_moyen_n_1 IS NULL OR prix_moyen_n_1 > 0::numeric),
+    CONSTRAINT ck_tarif_commune_transactions CHECK (nombre_transactions >= 0),
+    CONSTRAINT ck_tarif_commune_transactions_n_1 CHECK (nombre_transactions_n_1 >= 0),
+    CONSTRAINT pk_tarif_commune PRIMARY KEY (id),
+    CONSTRAINT tarif_commune_code_insee_not_null NOT NULL code_insee,
+    CONSTRAINT tarif_commune_date_calcul_not_null NOT NULL date_calcul,
+    CONSTRAINT tarif_commune_date_debut_periode_n_1_not_null NOT NULL date_debut_periode_n_1,
+    CONSTRAINT tarif_commune_date_debut_periode_n_not_null NOT NULL date_debut_periode_n,
+    CONSTRAINT tarif_commune_date_fin_periode_n_1_not_null NOT NULL date_fin_periode_n_1,
+    CONSTRAINT tarif_commune_date_fin_periode_n_not_null NOT NULL date_fin_periode_n,
+    CONSTRAINT tarif_commune_id_not_null NOT NULL id,
+    CONSTRAINT tarif_commune_nombre_transactions_n_1_not_null NOT NULL nombre_transactions_n_1,
+    CONSTRAINT tarif_commune_nombre_transactions_not_null NOT NULL nombre_transactions,
+    CONSTRAINT uk_tarif_commune_code_insee UNIQUE (code_insee));
+
+
 CREATE SEQUENCE IF NOT EXISTS BATCH_STEP_EXECUTION_SEQ
     MAXVALUE 9223372036854775807
     NO CYCLE;
