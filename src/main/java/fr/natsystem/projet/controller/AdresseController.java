@@ -36,7 +36,7 @@ public class AdresseController {
 
     @GetMapping("/communes/{code_insee}/tarif")
     public Optional<TarifCommune> getTarifCommune(
-            @RequestParam @PathVariable String codeInsee
+            @PathVariable("code_insee") String codeInsee
     ) {
         return tarifCommuneService.findByCodeInsee(codeInsee);
     }
