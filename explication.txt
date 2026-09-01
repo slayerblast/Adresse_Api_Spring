@@ -109,3 +109,10 @@ Pour cela j'ai décidé de créer une table Tarif_Commune qui contient les donn�
 
 J'ai aussi créé un repository, un service et un model pour Tarif_Commune pour mettre la methode qui va me faire la recherche de la tarification de commune sur le code insee en entré
  
+Étape 20 : Restitution cartographique des tarifs communaux `[WEB]`
+
+Pour cette étape, comme coté base j'ai ajouté les contours, il faut aussi que dans mon back j'ajoute un model, un repository et un service car coté front j'ai des appels à faire.
+J'ai essayé une premiere fois de charger les contours sur toute la France mais cela prenait beaucoup trop de temps et j'avais meme une erreur quand je lançais le endpoint.
+Du coup pour pouvoir afficher les contours sur toute la France j'ai du simplifier dans la base en faisait un ST_SimplifyPreserveTopology(geom, 0.001) 
+sur un autre champ que j'ai appelé geom_simple car je voulais garder une version non simplifiée. De ce fait, j'utilise la version simplifier dans ma requete api.
+J'ai aussi ajouté dans ma requete le prix moyen qui apparait dans la table de tarif des communes car j'en ai besoin pour le front pour pouvoir afficher une opacité différente par rapport au prix moyen du m2  

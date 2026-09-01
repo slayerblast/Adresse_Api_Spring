@@ -21,9 +21,7 @@ public class ContourRepository {
                         c.insee,
                         c.nom,
                         t.prix_Moyen,
-                        ST_AsGeoJSON(
-                            ST_SimplifyPreserveTopology(c.geom_simple, 0.001)
-                        ) AS contour
+                        ST_AsGeoJSON(c.geom_simple) AS contour
                     FROM commune_contour c
                     JOIN tarif_commune t
                     ON t.code_insee = c.insee
