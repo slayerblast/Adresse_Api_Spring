@@ -3,7 +3,6 @@ package fr.natsystem.projet.model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-import java.util.Objects;
 
 
 public record Adresse(
@@ -42,19 +41,12 @@ public record Adresse(
 
         } else if (!source_nom_voie.equals(other.source_nom_voie)) {
 
-            if (INCONNUE.equalsIgnoreCase(source_nom_voie)) {
-                better = false;
-            } else if (INCONNUE.equalsIgnoreCase(other.source_nom_voie)) {
+            if (INCONNUE.equalsIgnoreCase(other.source_nom_voie)) {
                 better = true;
             }
 
-        } else if (!source_position.equals(other.source_position)) {
-
-            if (INCONNUE.equalsIgnoreCase(source_position)) {
-                better = false;
-            } else if (INCONNUE.equalsIgnoreCase(other.source_position)) {
+        } else if (!source_position.equals(other.source_position) && INCONNUE.equalsIgnoreCase(other.source_position)) {
                 better = true;
-            }
         }
 
         return better;

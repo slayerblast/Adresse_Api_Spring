@@ -1,9 +1,11 @@
 package fr.natsystem.projet.controller;
 
 import fr.natsystem.projet.model.Adresse;
+import fr.natsystem.projet.model.ContourCommune;
 import fr.natsystem.projet.model.Dvf;
 import fr.natsystem.projet.model.TarifCommune;
 import fr.natsystem.projet.services.AdresseService;
+import fr.natsystem.projet.services.ContourCommuneService;
 import fr.natsystem.projet.services.TarifCommuneService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,12 +35,18 @@ public class AdresseController {
 
     private final AdresseService service;
     private final TarifCommuneService tarifCommuneService;
+    private final ContourCommuneService contourCommuneService;
 
     @GetMapping("/communes/{code_insee}/tarif")
     public Optional<TarifCommune> getTarifCommune(
             @PathVariable("code_insee") String codeInsee
     ) {
         return tarifCommuneService.findByCodeInsee(codeInsee);
+    }
+
+    @GetMapping("/communes/contour")
+    public List<ContourCommune> getContourCommune(){
+        return contourCommuneService.findAll();
     }
 
     @GetMapping("/proches")

@@ -2,7 +2,6 @@ package fr.natsystem.projet.repository;
 
 import fr.natsystem.projet.model.TarifCommune;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
