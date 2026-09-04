@@ -31,49 +31,52 @@ public class DownloadTasklet implements Tasklet {
             ChunkContext chunkContext) throws Exception {
         String innerJob = contribution.getStepExecution().getJobExecution().getJobParameters().getString("innerJob");
         String csvPath ="";
-        if (innerJob.equals("importAdresseJob")) {
-            csvPath = fileDownloadService.downloadAndUngzip(urlAdresse);
-        } else if (innerJob.equals("importDvfJob")) {
-            csvPath = fileDownloadService.downloadAndUngzip(urlDvf);
-        }else {
-            csvPath = fileDownloadService.downloadAndUngzip(urlAdresse);
-        }
+        if(innerJob!=null){
+            if (innerJob.equals("importAdresseJob")) {
+                csvPath = fileDownloadService.downloadAndUngzip(urlAdresse);
+            } else if (innerJob.equals("importDvfJob")) {
+                csvPath = fileDownloadService.downloadAndUngzip(urlDvf);
+            }else {
+                csvPath = fileDownloadService.downloadAndUngzip(urlAdresse);
+            }
 
-        if (csvPath.isBlank()) {
+            if (csvPath.isBlank()) {
+                chunkContext.getStepContext()
+                        .getStepExecution()
+                        .getJobExecution()
+                        .getExecutionContext()
+                        .putString("noFile", "Not found");
+                chunkContext.getStepContext()
+                        .getStepExecution()
+                        .getJobExecution()
+                        .getExecutionContext()
+                        .putString("lastDeciderStatus", "NO_INPUT_FILE");
+                contribution.setExitStatus(new ExitStatus("NO_INPUT_FILE"));
+
+                return RepeatStatus.FINISHED;
+            }
+
+            String checksum = ChecksumUtils.sha256(csvPath);
+
             chunkContext.getStepContext()
                     .getStepExecution()
                     .getJobExecution()
                     .getExecutionContext()
-                    .putString("noFile", "Not found");
+                    .putString("inputFile", csvPath);
+
             chunkContext.getStepContext()
                     .getStepExecution()
                     .getJobExecution()
                     .getExecutionContext()
-                    .putString("lastDeciderStatus", "NO_INPUT_FILE");
-            contribution.setExitStatus(new ExitStatus("NO_INPUT_FILE"));
-
-            return RepeatStatus.FINISHED;
+                    .putString("checksum", checksum);
+            chunkContext.getStepContext()
+                    .getStepExecution()
+                    .getJobExecution()
+                    .getExecutionContext()
+                    .putString("lastDeciderStatus", "READY");
+            contribution.setExitStatus(new ExitStatus("READY"));
         }
 
-        String checksum = ChecksumUtils.sha256(csvPath);
-
-        chunkContext.getStepContext()
-                .getStepExecution()
-                .getJobExecution()
-                .getExecutionContext()
-                .putString("inputFile", csvPath);
-
-        chunkContext.getStepContext()
-                .getStepExecution()
-                .getJobExecution()
-                .getExecutionContext()
-                .putString("checksum", checksum);
-        chunkContext.getStepContext()
-                .getStepExecution()
-                .getJobExecution()
-                .getExecutionContext()
-                .putString("lastDeciderStatus", "READY");
-        contribution.setExitStatus(new ExitStatus("READY"));
         return RepeatStatus.FINISHED;
     }
 }

@@ -1,7 +1,5 @@
 package fr.natsystem.projet.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.natsystem.projet.model.ContourCommune;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -13,14 +11,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ContourRepository {
     private final JdbcTemplate jdbcTemplate;
-    private final ObjectMapper objectMapper = new ObjectMapper();
     public List<ContourCommune> findAll() {
 
         String sql = """
                 SELECT
                         c.insee,
                         c.nom,
-                        t.prix_Moyen,
+                        t.prix_M2,
                         ST_AsGeoJSON(c.geom_simple) AS contour
                     FROM commune_contour c
                     JOIN tarif_commune t
@@ -29,15 +26,13 @@ public class ContourRepository {
 
         return jdbcTemplate.query(
                 sql,
-                (rs, rowNum) -> {
-
-                        return new ContourCommune(
+                (rs, rowNum) ->
+                        new ContourCommune(
                                 rs.getString("insee"),
                                 rs.getString("nom"),
-                                rs.getBigDecimal("prix_Moyen"),
+                                rs.getBigDecimal("prix_M2"),
                                 rs.getString("contour")
-                        );
-                }
+                        )
         );
     }
 }

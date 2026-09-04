@@ -1,6 +1,5 @@
 package fr.natsystem.projet.batch.reader;
 
-import fr.natsystem.projet.batch.mapper.AdresseFieldSetMapper;
 import fr.natsystem.projet.batch.mapper.AdresseRowMapper;
 import fr.natsystem.projet.batch.mapper.DvfRowMapper;
 import fr.natsystem.projet.model.Adresse;
@@ -9,16 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.infrastructure.item.database.JdbcPagingItemReader;
 import org.springframework.batch.infrastructure.item.database.Order;
 import org.springframework.batch.infrastructure.item.database.support.SqlitePagingQueryProvider;
-import org.springframework.batch.infrastructure.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.infrastructure.item.file.FlatFileItemReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.FileSystemResource;
 
 import javax.sql.DataSource;
-import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

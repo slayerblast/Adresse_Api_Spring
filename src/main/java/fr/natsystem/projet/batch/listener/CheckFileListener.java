@@ -9,16 +9,15 @@ import org.springframework.stereotype.Component;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 
 @Component
 @Slf4j
-public class checkFileListener implements JobExecutionListener {
+public class CheckFileListener implements JobExecutionListener {
     @Value("${spring.batch.bilanDir}")
     private String bilanDir;
-    private String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+    private String timestamp = ZonedDateTime.now(ZoneId.of("Europe/Paris")).format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 
     @Override
     public void afterJob(JobExecution je) {
@@ -26,7 +25,15 @@ public class checkFileListener implements JobExecutionListener {
         String status = je.getExecutionContext().getString("lastDeciderStatus", "");
         if (je.getStatus() == BatchStatus.FAILED) {
             try (FileWriter writer = new FileWriter(bilanDir + "rapport_" + je.getJobInstance().getJobName() + "_" + timestamp + ".txt")) {
-                Duration jobDuration = Duration.between(je.getStartTime(), je.getEndTime());
+                Duration jobDuration = Duration.ZERO;
+                LocalDateTime startTime = je.getStartTime();
+                LocalDateTime endTime = je.getEndTime();
+                if(startTime != null && endTime != null) {
+                    jobDuration = Duration.between(
+                            startTime.atZone(ZoneId.systemDefault()).toInstant(),
+                            endTime.atZone(ZoneId.systemDefault()).toInstant()
+                    );
+                }
 
                 writer.write("=== STATUS DU JOB ===\n\n");
                 writer.write("Status : " + je.getStatus() + "\n");

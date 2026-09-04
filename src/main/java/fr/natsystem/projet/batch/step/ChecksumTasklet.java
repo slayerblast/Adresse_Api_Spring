@@ -16,7 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Slf4j
@@ -25,13 +26,13 @@ import java.time.format.DateTimeFormatter;
 public class ChecksumTasklet implements Tasklet {
     @Value("${spring.batch.pathFile}")
     private String pathFile;
-    private String checkSum;
-    private String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+    private final String timestamp = ZonedDateTime.now(ZoneId.of("Europe/Paris")).format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
     @Value("${spring.batch.archive}")
     private String archiveDir;
 
     @Override
     public @Nullable RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+        String checkSum;
         String innerJobParent = contribution.getStepExecution().getJobParameters().getString("innerJob");
         File folder = new File(pathFile);
         Path destination = null;
@@ -42,16 +43,19 @@ public class ChecksumTasklet implements Tasklet {
                 .getExecutionContext()
                 .putString("checksum", checkSum);
         Path source = Paths.get(files[0].getAbsolutePath());
-        if (innerJobParent.equals("importAdresseJob"))
-        {
-            destination = Paths.get(archiveDir).resolve(timestamp+"_adresse.csv");
+        if(innerJobParent != null){
+            if (innerJobParent.equals("importAdresseJob"))
+            {
+                destination = Paths.get(archiveDir).resolve(timestamp+"_adresse.csv");
+            }
+            else if (innerJobParent.equals("importDvfJob"))
+            {
+                destination = Paths.get(archiveDir).resolve(timestamp+"_dvf.csv");
+            } else {
+                destination = Paths.get(archiveDir).resolve(timestamp+"_adresse.csv");
+            }
         }
-        else if (innerJobParent.equals("importDvfJob"))
-        {
-            destination = Paths.get(archiveDir).resolve(timestamp+"_dvf.csv");
-        } else {
-            destination = Paths.get(archiveDir).resolve(timestamp+"_adresse.csv");
-        }
+
 
         Files.move(
                 source,

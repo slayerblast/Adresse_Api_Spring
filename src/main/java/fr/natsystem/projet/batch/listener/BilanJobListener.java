@@ -13,15 +13,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
@@ -36,7 +40,7 @@ public class BilanJobListener implements JobExecutionListener {
     private final AdresseSkipListener skipListener;
     private final DvfSkipListener dvfSkipListener;
     private final JobRepository jobRepository;
-    private String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+    private String timestamp = ZonedDateTime.now(ZoneId.of("Europe/Paris")).format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
 
     @Value("${spring.batch.bilanDir}")
     private String bilanDir;
@@ -48,192 +52,297 @@ public class BilanJobListener implements JobExecutionListener {
     }
 
     @Override
-    public void afterJob(JobExecution je) {
-        String checksum = je.getExecutionContext().getString("checksum","");
-        long parentJobId = je.getJobParameters().getLong("jobExecutionId");
-        log.info("Job id parent {} ", parentJobId);
-        String csvError = je.getExecutionContext().getString("csvStatus", "");
-        String status = je.getJobParameters().getString("lastExitStatus");
-        String noFile = je.getExecutionContext().getString("noFile", "");
-        JobExecution parentExecution = jobRepository.getJobExecution(parentJobId);
-        log.info("Job {} : {}", je.getJobInstance().getJobName(), je.getStatus());
+    public void afterJob(JobExecution jobExecution) {
+        String checksum = jobExecution.getExecutionContext()
+                .getString("checksum", "");
 
+        String csvError = jobExecution.getExecutionContext()
+                .getString("csvStatus", "");
 
-        try (FileWriter writer = new FileWriter(bilanDir+"rapport_"+je.getJobInstance().getJobName()+"_"+timestamp+".txt")) {
-            Duration jobDuration = Duration.between(
-                    parentExecution.getStartTime(),
-                    je.getEndTime()
+        String noFile = jobExecution.getExecutionContext()
+                .getString("noFile", "");
+
+        String status = jobExecution.getJobParameters()
+                .getString("lastExitStatus", "");
+
+        Long parentJobId = jobExecution.getJobParameters()
+                .getLong("jobExecutionId");
+
+        if (parentJobId == null) {
+            throw new IllegalStateException(
+                    "Le paramètre jobExecutionId est absent"
             );
-
-
-            // ============================
-            // BILAN STATUS DU JOB
-            // ============================
-
-            writer.write("=== STATUS DU JOB ===\n\n");
-            writer.write("Job parent : " + parentExecution.getJobInstance().getJobName() + "\n");
-            writer.write("Status : " + je.getStatus() + "\n");
-            if (!csvError.isEmpty()) {
-                writer.write("ExitStatus : " + csvError + "\n\n");
-            } else {
-                writer.write("ExitStatus : " + status + "\n\n");
-            }
-            writer.write("Début : " + parentExecution.getStartTime() + "\n");
-            writer.write("Fin    : " + je.getEndTime() + "\n");
-            writer.write("Durée totale : " + jobDuration.toSeconds() + " secondes\n\n");
-
-
-            if (!noFile.equals("Not found") && !status.equals("NO_INPUT_FILE") ) {
-                // ============================
-                // BILAN du temps par etape
-                // ============================
-                writer.write("=== BILAN DES TEMPS PAR ETAPES ===\n");
-                for (StepExecution step : je.getStepExecutions()) {
-                    if (step.getStepName().startsWith("importAdresseStep:") || step.getStepName().startsWith("checksumStep:") || step.getStepName().startsWith("importDvfStep:") ) {
-                        continue;
-                    }
-                    Duration stepDuration = Duration.between(
-                            step.getStartTime(),
-                            step.getEndTime()
-                    );
-
-                    writer.write(
-                            step.getStepName()
-                                    + " : "
-                                    + stepDuration.toSeconds()
-                                    + " secondes\n"
-                    );
-                }
-                writer.write("\n");
-
-                // ============================
-                // BILAN IMPORT CSV -> STAGING
-                // ============================
-                StepExecution importSet = je.getStepExecutions().stream()
-                        .filter(s -> s.getStepName().equals("csvToStagingStep"))
-                        .findFirst().orElse(null);
-                if (importSet != null) {
-                    writer.write("=== BILAN IMPORT CSV -> STAGING ===\n\n");
-                    writer.write("checksum du fichier : " + checksum + "\n\n");
-                    //writer.write("ReadCount  : " + importSet.getReadCount() + "\n");
-                    //writer.write("WriteCount : " + importSet.getWriteCount() + "\n");
-                    //writer.write("Lignes qui n'ont pas passé le BeanValidation : " + importSet.getFilterCount() + "\n");
-                    //writer.write("Nombre d'ID rejetés : " + skipListener.getIdsRejetes().size() + "\n\n");
-
-                    // ============================
-                    // BILAN IMPORT ADRESSE
-                    // ============================
-
-                    importSet = je.getStepExecutions().stream()
-                            .filter(s -> s.getStepName().equals("masterStep")
-                                    || s.getStepName().equals("masterStepDvf"))
-                            .findFirst().orElse(null);
-                    if (importSet != null) {
-
-                        writer.write("=== BILAN IMPORT ===\n\n");
-                        writer.write("ReadCount  : " + importSet.getReadCount() + "\n");
-                        writer.write("WriteCount : " + importSet.getWriteCount() + "\n");
-                        writer.write("Doublons pur : " + doublonPur + "\n");
-                        writer.write("Lignes en double : " + doublon + "\n");
-                        if (importSet.getJobExecution().getJobInstance().getJobName().equals("importAdresseJob")){
-                            writer.write("Nombre d'ID rejetés : " + skipListener.getIdsRejetes().size() + "\n\n");
-                        }else if (importSet.getJobExecution().getJobInstance().getJobName().equals("importDvfJob")){
-                            writer.write("Nombre d'ID rejetés : " + dvfSkipListener.getIdsRejetes().size() + "\n\n");
-                        }else {
-                            writer.write("Nombre d'ID rejetés : " + skipListener.getIdsRejetes().size() + "\n\n");
-                        }
-                        writer.write("Lignes obsolète supprimées: " + obsolete + "\n\n");
-                    }
-                }
-
-            } else {
-                writer.write("Aucun fichier à traiter");
-            }
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
 
+        JobExecution parentExecution =
+                jobRepository.getJobExecution(parentJobId);
 
-        // ============================
-        // BILAN DES ERREURS
-        // ============================
+        if (parentExecution == null) {
+            throw new IllegalStateException(
+                    "Le job parent est introuvable : " + parentJobId
+            );
+        }
 
-        try (FileWriter writer =
-                     new FileWriter(bilanDir+"bilan_failed.txt")) {
+        log.info("Job id parent {}", parentJobId);
+        log.info(
+                "Job {} : {}",
+                jobExecution.getJobInstance().getJobName(),
+                jobExecution.getStatus()
+        );
 
+        writeMainReport(
+                jobExecution,
+                parentExecution,
+                checksum,
+                csvError,
+                status,
+                noFile,
+                timestamp
+        );
+
+        writeFailureReport(jobExecution);
+        writeRejectedReport(jobExecution,timestamp);
+    }
+
+    private void writeMainReport(
+            JobExecution jobExecution,
+            JobExecution parentExecution,
+            String checksum,
+            String csvError,
+            String status,
+            String noFile,
+            String timestamp
+    ) {
+        String jobName = jobExecution.getJobInstance().getJobName();
+
+        Path reportPath = Path.of(
+                bilanDir,
+                "rapport_" + jobName + "_" + timestamp + ".txt"
+        );
+
+        try (BufferedWriter writer = Files.newBufferedWriter(
+                reportPath,
+                StandardCharsets.UTF_8
+        )) {
+            Duration jobDuration = calculateDuration(
+                    parentExecution.getStartTime(),
+                    jobExecution.getEndTime()
+            );
+
+            writer.write("=== STATUS DU JOB ===\n\n");
+            writer.write(
+                    "Job parent : "
+                            + parentExecution.getJobInstance().getJobName()
+                            + "\n"
+            );
+            writer.write("Status : " + jobExecution.getStatus() + "\n");
+
+            String exitStatus = csvError.isBlank() ? status : csvError;
+            writer.write("ExitStatus : " + exitStatus + "\n\n");
+
+            writer.write("Début : " + parentExecution.getStartTime() + "\n");
+            writer.write("Fin    : " + jobExecution.getEndTime() + "\n");
+            writer.write(
+                    "Durée totale : "
+                            + jobDuration.toSeconds()
+                            + " secondes\n\n"
+            );
+
+            if ("Not found".equals(noFile)
+                    || "NO_INPUT_FILE".equals(status)) {
+                writer.write("Aucun fichier à traiter\n");
+                return;
+            }
+
+            writeStepDurations(writer, jobExecution);
+            writeImportReport(writer, jobExecution, checksum);
+
+        } catch (IOException e) {
+            throw new UncheckedIOException(
+                    "Impossible d'écrire le rapport principal : " + reportPath,
+                    e
+            );
+        }
+    }
+    private void writeStepDurations(
+            BufferedWriter writer,
+            JobExecution jobExecution
+    ) throws IOException {
+
+        writer.write("=== BILAN DES TEMPS PAR ETAPES ===\n");
+
+        for (StepExecution step : jobExecution.getStepExecutions()) {
+            String stepName = step.getStepName();
+
+            boolean ignored = stepName.startsWith("importAdresseStep:")
+                    || stepName.startsWith("checksumStep:")
+                    || stepName.startsWith("importDvfStep:");
+
+            if (ignored) {
+                continue;
+            }
+
+            Duration duration = calculateDuration(
+                    step.getStartTime(),
+                    step.getEndTime()
+            );
+
+            writer.write(
+                    "%s : %d secondes%n"
+                            .formatted(stepName, duration.toSeconds())
+            );
+        }
+
+        writer.newLine();
+    }
+    private void writeImportReport(
+            BufferedWriter writer,
+            JobExecution jobExecution,
+            String checksum
+    ) throws IOException {
+
+        boolean hasCsvImport = jobExecution.getStepExecutions()
+                .stream()
+                .anyMatch(step ->
+                        "csvToStagingStep".equals(step.getStepName())
+                );
+
+        if (!hasCsvImport) {
+            return;
+        }
+
+        writer.write("=== BILAN IMPORT CSV -> STAGING ===\n\n");
+        writer.write("Checksum du fichier : " + checksum + "\n\n");
+
+        StepExecution importStep = jobExecution.getStepExecutions()
+                .stream()
+                .filter(step ->
+                        "masterStep".equals(step.getStepName())
+                                || "masterStepDvf".equals(step.getStepName())
+                )
+                .findFirst()
+                .orElse(null);
+
+        if (importStep == null) {
+            return;
+        }
+
+        String jobName = jobExecution.getJobInstance().getJobName();
+
+        int rejectedCount = "importDvfJob".equals(jobName)
+                ? dvfSkipListener.getIdsRejetes().size()
+                : skipListener.getIdsRejetes().size();
+
+        writer.write("=== BILAN IMPORT ===\n\n");
+        writer.write("ReadCount  : " + importStep.getReadCount() + "\n");
+        writer.write("WriteCount : " + importStep.getWriteCount() + "\n");
+        writer.write("Doublons purs : " + doublonPur + "\n");
+        writer.write("Lignes en double : " + doublon + "\n");
+        writer.write("Nombre d'ID rejetés : " + rejectedCount + "\n\n");
+        writer.write(
+                "Lignes obsolètes supprimées : " + obsolete + "\n\n"
+        );
+    }
+    private Duration calculateDuration(
+            LocalDateTime startTime,
+            LocalDateTime endTime
+    ) {
+        if (startTime == null || endTime == null) {
+            return Duration.ZERO;
+        }
+
+        ZoneId zoneId = ZoneId.systemDefault();
+
+        return Duration.between(
+                startTime.atZone(zoneId).toInstant(),
+                endTime.atZone(zoneId).toInstant()
+        );
+    }
+    private void writeFailureReport(JobExecution jobExecution) {
+        Path reportPath = Path.of(bilanDir, "bilan_failed.txt");
+
+        List<StepExecution> failedSteps = jobExecution.getStepExecutions()
+                .stream()
+                .filter(step -> step.getStatus() == BatchStatus.FAILED)
+                .toList();
+
+        try (BufferedWriter writer = Files.newBufferedWriter(
+                reportPath,
+                StandardCharsets.UTF_8
+        )) {
             writer.write("=== BILAN DES ERREURS ===\n\n");
 
-            boolean hasFailure = false;
+            if (failedSteps.isEmpty()) {
+                writer.write("Aucune erreur détectée.\n");
+                return;
+            }
 
-            for (StepExecution step : je.getStepExecutions()) {
-
-                if (step.getStatus() != BatchStatus.FAILED) {
-                    continue;
-                }
-
-                hasFailure = true;
-
+            for (StepExecution step : failedSteps) {
                 writer.write("Step : " + step.getStepName() + "\n");
                 writer.write("Status : " + step.getStatus() + "\n");
-                writer.write("ExitStatus : " + step.getExitStatus() + "\n\n");
+                writer.write(
+                        "ExitStatus : " + step.getExitStatus() + "\n\n"
+                );
 
-                for (Throwable throwable : step.getFailureExceptions()) {
-
+                for (Throwable failure : step.getFailureExceptions()) {
                     writer.write("Exception :\n");
-
                     writer.write(
-                            throwable.getClass().getName()
+                            failure.getClass().getName()
                                     + " : "
-                                    + throwable.getMessage()
+                                    + failure.getMessage()
                                     + "\n\n"
                     );
                 }
 
                 writer.write(
-                        "----------------------------------------\n\n");
-            }
-            if (!hasFailure) {
-                writer.write("Aucune erreur détectée.\n");
+                        "----------------------------------------\n\n"
+                );
             }
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(
+                    "Impossible d'écrire le rapport des erreurs : " + reportPath,
+                    e
+            );
         }
+    }
+    private void writeRejectedReport(JobExecution jobExecution, String timestamp) {
+        String jobName = jobExecution.getJobInstance().getJobName();
 
-        try (FileWriter writer = new FileWriter(bilanDir+"rapport_rejetés_"+je.getJobInstance().getJobName()+"_"+timestamp+".txt")) {
-            writer.write("=== BILAN DES LIGNES REJETÉS ===\n\n");
-            writer.write("Nombre de ligne ");
-            dvfSkipListener.getIdsRejetes().forEach(id -> {
-                try {
-                    writer.write(id+"\n");
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        }catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        /*
-        for (StepExecution stepExecution : je.getStepExecutions()) {
+        Path reportPath = Path.of(
+                bilanDir,
+                "rapport_rejetes_" + jobName + "_" + timestamp + ".txt"
+        );
 
-            log.info("Step={} Status={}",
-                    stepExecution.getStepName(),
-                    stepExecution.getStatus());
+        Collection<?> rejectedIds = "importDvfJob".equals(jobName)
+                ? dvfSkipListener.getIdsRejetes()
+                : skipListener.getIdsRejetes();
 
-            if (!stepExecution.getFailureExceptions().isEmpty()) {
+        try (BufferedWriter writer = Files.newBufferedWriter(
+                reportPath,
+                StandardCharsets.UTF_8
+        )) {
+            writer.write("=== BILAN DES LIGNES REJETÉES ===\n\n");
+            writer.write(
+                    "Nombre de lignes rejetées : "
+                            + rejectedIds.size()
+                            + "\n\n"
+            );
 
-                for (Throwable t : stepExecution.getFailureExceptions()) {
-
-                    log.error(
-                            "Erreur sur {}",
-                            stepExecution.getStepName(),
-                            t);
-                }
+            for (Object id : rejectedIds) {
+                writer.write(String.valueOf(id));
+                writer.newLine();
             }
-        }*/
+
+        } catch (IOException e) {
+            throw new UncheckedIOException(
+                    "Impossible d'écrire le rapport des rejets : " + reportPath,
+                    e
+            );
+        }
     }
 }
+
 
 
 

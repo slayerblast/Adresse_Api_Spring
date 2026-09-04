@@ -34,9 +34,4 @@ public class AdresseSkipListener implements SkipListener<Adresse, Adresse> {
 
     }
 
-
-
-
-
-
 }

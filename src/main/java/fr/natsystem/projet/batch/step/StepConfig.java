@@ -40,7 +40,7 @@ public class StepConfig {
     public Step helloStep(JobRepository jobRepository, PlatformTransactionManager txManager) {
         return new StepBuilder("helloStep", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
-                    System.out.println("=== Hello, Spring Batch ! ===");
+                    log.info("=== Hello, Spring Batch ! ===");
                     return RepeatStatus.FINISHED;
                 }, txManager)
                 .build();
@@ -56,7 +56,7 @@ public class StepConfig {
             CompositeItemProcessor <Adresse, Adresse> compositeCsvProcessor,
             StepProgressListener listener,
             AdresseSkipListener skipListener,
-            ChunkListener MetricChunkListener) {
+            ChunkListener metricChunkListener) {
         return new StepBuilder("importAdresseStep", repo)
                 .<Adresse, Adresse>chunk(1000)
                 .transactionManager(tx)
@@ -68,7 +68,7 @@ public class StepConfig {
                 .skipLimit(Integer.MAX_VALUE)
                 .listener(listener)
                 .listener(skipListener)
-                .listener(MetricChunkListener)
+                .listener(metricChunkListener)
                 .build();
 
     }
@@ -83,7 +83,7 @@ public class StepConfig {
             ValidatingItemProcessor<Dvf> validatingProcessorDvf,
             StepProgressListener listener,
             DvfSkipListener skipListener,
-            ChunkListener MetricChunkListener) {
+            ChunkListener metricChunkListener) {
         return new StepBuilder("importDvfStep", repo)
                 .<Dvf, Dvf>chunk(1000)
                 .transactionManager(tx)
@@ -95,32 +95,10 @@ public class StepConfig {
                 .skipLimit(Integer.MAX_VALUE)
                 .listener(listener)
                 .listener(skipListener)
-                .listener(MetricChunkListener)
+                .listener(metricChunkListener)
                 .build();
 
     }
-    /*
-    @Bean
-    public Step importCsvStep(
-            JobRepository repo,
-            PlatformTransactionManager tx,
-            FlatFileItemReader<Adresse> csvReader,
-            @Qualifier("stagingWriter")
-            JdbcBatchItemWriter<Adresse> stagingWriter,
-            StepProgessListener listener,
-            AdresseSkipListener skipListener) {
-        return new StepBuilder("importCsvStep", repo)
-                .<Adresse, Adresse>chunk(10000)
-                .transactionManager(tx)
-                .reader(csvReader)
-                .writer(stagingWriter)
-                .faultTolerant()
-                .skip(ValidationException.class)
-                .skipLimit(Integer.MAX_VALUE)
-                .listener(listener)
-                .listener(skipListener)
-                .build();
-    }*/
 
     @Bean
     public Step suppressionObsoleteStep(
@@ -235,24 +213,24 @@ public class StepConfig {
 
     @Bean
     public Step adresseJobStep(JobRepository repo,
-                               NestedJobStepListener Listener,
+                               NestedJobStepListener listener,
                                PlatformTransactionManager tx,
                                @Qualifier("jobOperator") JobOperator launcher, Job importAdresseJob) {
         return new StepBuilder("adresseJobStep", repo)
                 .job(importAdresseJob)
-                .listener(Listener)
+                .listener(listener)
                 .operator(launcher)
                 .parametersExtractor(new ChecksumExtractor())
                 .build();
     }
     @Bean
     public Step dvfJobStep(JobRepository repo,
-                               NestedJobStepListener Listener,
+                               NestedJobStepListener listener,
                                PlatformTransactionManager tx,
                                @Qualifier("jobOperator") JobOperator launcher, Job importDvfJob) {
         return new StepBuilder("dvfJobStep", repo)
                 .job(importDvfJob)
-                .listener(Listener)
+                .listener(listener)
                 .operator(launcher)
                 .parametersExtractor(new ChecksumExtractor())
                 .build();

@@ -22,7 +22,4 @@ public class MetricReadListener implements ItemReadListener<Adresse> {
         metrics.addReadTime(System.nanoTime() - start);
     }
 
-    @Override
-    public void onReadError(Exception ex) {
-    }
 }

@@ -12,27 +12,32 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Objects;
 
 @Slf4j
 @Component
 public class CheckArgDecider implements JobExecutionDecider {
     @Value("${spring.batch.retriever}")
     private boolean retriever;
-    private FlowExecutionStatus result ;
     @Value("${spring.batch.pathFile}")
     private String pathFile;
 
     @Override
     public FlowExecutionStatus decide(JobExecution jobExecution, @Nullable StepExecution stepExecution) {
-        boolean fileExist;
+        FlowExecutionStatus result;
+        boolean fileExist = false;
+        long count = 0;
+        File folder = null;
         String inputFile = jobExecution.getJobParameters().getString("inputFile");
-        File file = new File(inputFile);
 
-        fileExist = file.exists() && file.isFile();
-        File folder = new File(pathFile);
-        long count = Arrays.stream(folder.listFiles())
-                .filter(File::isFile)
-                .count();
+        File file = inputFile == null ? null : new File(inputFile);
+        if (file != null) {
+            fileExist = file.exists() && file.isFile();
+            folder = new File(pathFile);
+             count = Arrays.stream(Objects.requireNonNull(folder.listFiles()))
+                    .filter(File::isFile)
+                    .count();
+        }
 
         if (fileExist) {
             result = new FlowExecutionStatus("OK_FILE_EXIST"); // le fichier existe et correspond à la valeur de l'argument
@@ -56,5 +61,4 @@ public class CheckArgDecider implements JobExecutionDecider {
         jobExecution.getExecutionContext().putString("lastDeciderStatus", result.getName());
         return result;
     }
-
 }

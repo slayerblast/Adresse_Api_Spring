@@ -16,8 +16,10 @@ public class AdresseValidator
         implements Validator<Adresse> {
 
     private static final Pattern CODE_INSEE_PATTERN =
-            Pattern.compile("^(?:(?:0[1-9]|[1-8][0-9]|9[0-5]|2[AB])\\d{3}|(?:97[1-8]|98[6-8])\\d{2})$",
-                    Pattern.CASE_INSENSITIVE);
+            Pattern.compile(
+                    "^((0[1-9]|[1-8]\\d|9[0-5]|2[AB])\\d{3}|(97[1-8]|98[6-8])\\d{2})$",
+                    Pattern.CASE_INSENSITIVE
+            );
 
     /**
      * à adapter selon le critère choisi !!!

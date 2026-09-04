@@ -24,7 +24,7 @@ import java.util.Map;
 @StepScope
 @RequiredArgsConstructor
 public class AdresseCacheService {
-    private Map<AdresseKey, Adresse> cache = new HashMap<>(10000);
+    private Map<AdresseKey, Adresse> cache = HashMap.newHashMap(10000);
 
     @Value("#{stepExecutionContext['codeInsee']}")
     private String codeInsee;
@@ -35,7 +35,7 @@ public class AdresseCacheService {
 
     public void load(String codeInsee) {
 
-        cache = new HashMap<>(10000);
+        cache = HashMap.newHashMap(10000);
         currentCodeInsee = codeInsee;
 
         // charger uniquement cette commune

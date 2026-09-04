@@ -1,11 +1,11 @@
 package fr.natsystem.projet.services;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
@@ -24,12 +24,10 @@ public class FileDownloadService {
     @Value("${spring.batch.csvFileLoc}")
     private String csvFileLoc;
 
-    public String downloadAndUngzip(String url) throws Exception {
+    public String downloadAndUngzip(String url) {
+        Path gzFile = Paths.get(gzFilePath);
 
-        try {
-            Path gzFile = Paths.get(gzFilePath);
-
-            HttpClient client = HttpClient.newHttpClient();
+        try (HttpClient client = HttpClient.newHttpClient()) {
 
             client.send(
                     HttpRequest.newBuilder()
@@ -38,19 +36,21 @@ public class FileDownloadService {
                     HttpResponse.BodyHandlers.ofFile(gzFile)
             );
 
-            String csvFile = csvFileLoc;
+            Path csvFile = Paths.get(csvFileLoc);
 
             try (
-                    GZIPInputStream gis =
-                            new GZIPInputStream(new FileInputStream(gzFile.toFile()));
-                    FileOutputStream fos =
-                            new FileOutputStream(csvFile)
+                    var input = new GZIPInputStream(Files.newInputStream(gzFile));
+                    var output = Files.newOutputStream(csvFile)
             ) {
-                gis.transferTo(fos);
+                input.transferTo(output);
             }
 
-            return Paths.get(csvFile).toAbsolutePath().toString();
-        }catch (Exception e){
+            return csvFile.toAbsolutePath().toString();
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return "";
+        } catch (IOException e) {
             return "";
         }
     }

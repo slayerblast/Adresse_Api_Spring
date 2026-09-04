@@ -9,18 +9,25 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class InnerJobDecider implements JobExecutionDecider {
-    private FlowExecutionStatus result = null;
 
     @Override
     public FlowExecutionStatus decide(JobExecution jobExecution, @Nullable StepExecution stepExecution) {
-        if(jobExecution.getJobParameters().getString("innerJob").equals("importAdresseJob")) {
-            result = new FlowExecutionStatus("importAdresseJob");
+        final String innerJob = "innerJob";
+        final String importAdresseJob = "importAdresseJob";
+        final String importDvfJob = "importDvfJob";
+        FlowExecutionStatus result = null;
+        String jobParams = jobExecution.getJobParameters().getString(innerJob);
+        if (jobParams == null) {
+            return result;
         }
-        else if(jobExecution.getJobParameters().getString("innerJob").equals("importDvfJob")) {
-            result = new FlowExecutionStatus("importDvfJob");
-        }else {
-            result = new FlowExecutionStatus("importAdresseJob"); // par défaut on renvoie l'innerJob importAdresseJob
+        if (jobParams.equals(importAdresseJob)) {
+            result = new FlowExecutionStatus(importAdresseJob);
+        } else if (jobParams.equals(importDvfJob)) {
+            result = new FlowExecutionStatus(importDvfJob);
+        } else {
+            result = new FlowExecutionStatus(importAdresseJob); // par défaut on renvoie l'innerJob importAdresseJob
         }
+
         return result;
     }
 }

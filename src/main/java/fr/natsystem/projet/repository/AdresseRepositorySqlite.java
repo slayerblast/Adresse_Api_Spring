@@ -90,12 +90,11 @@ public class AdresseRepositorySqlite implements AdresseRepository {
                 Long.class,
                 params.toArray()
         );
-
-        return new PageImpl<>(
-                adresses,
-                pageable,
-                total
-        );
+        PageImpl<Adresse> page = null;
+        if (total != null){
+            page =  new PageImpl<>(adresses, pageable, total);
+        }
+        return page;
 
     }
 

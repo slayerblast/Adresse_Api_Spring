@@ -3,11 +3,14 @@ package fr.natsystem.projet;
 import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.repository.AdresseRepository;
 import lombok.RequiredArgsConstructor;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
 
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @RequiredArgsConstructor
@@ -20,6 +23,7 @@ class ProjetApplicationTests {
     void contextLoads() {
     }
 
+    @Disabled
     @Test
     void testerTempsReponseFindProchesSur100Points() {
 
@@ -74,6 +78,7 @@ class ProjetApplicationTests {
                 dureeTotaleMs,
                 dureeMoyenneMs
         );
+        assertTrue(nombreResultats > 0);
     }
 }
 

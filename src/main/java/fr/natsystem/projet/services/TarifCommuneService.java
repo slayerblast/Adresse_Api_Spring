@@ -3,7 +3,6 @@ package fr.natsystem.projet.services;
 import fr.natsystem.projet.model.TarifCommune;
 import fr.natsystem.projet.repository.TarifCommuneRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

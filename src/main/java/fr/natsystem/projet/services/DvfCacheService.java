@@ -23,7 +23,7 @@ import java.util.Map;
 @StepScope
 @RequiredArgsConstructor
 public class DvfCacheService {
-    private Map<Long, Dvf> cache = new HashMap<>(10000);
+    private Map<Long, Dvf> cache = HashMap.newHashMap(10000);
     @Value("#{stepExecutionContext['codeInsee']}")
     private String codeInsee;
     private final DvfRowMapper rowMapper;
@@ -31,7 +31,7 @@ public class DvfCacheService {
     private final JdbcTemplate jdbcTemplate;
 
     public void load(String codeInsee) {
-        cache = new HashMap<>(10000);
+        cache = HashMap.newHashMap(10000);
         currentCodeInsee = codeInsee;
 
         // charger uniquement cette commune

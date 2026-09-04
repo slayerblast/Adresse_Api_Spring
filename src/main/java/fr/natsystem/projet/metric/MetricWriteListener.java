@@ -23,8 +23,4 @@ public class MetricWriteListener implements ItemWriteListener<Adresse> {
         metrics.addWriteTime(System.nanoTime() - start);
     }
 
-    @Override
-    public void onWriteError(Exception exception,
-                             Chunk<? extends Adresse> items) {
-    }
 }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Profile("postgres")
 @Repository
@@ -21,6 +22,7 @@ public class AdresseRepositoryPostgres implements AdresseRepository {
 
     private final AdresseRowMapper adresseRowMapper;
     private final JdbcTemplate jdbcTemplate;
+
 
     @Override
     public Page<Adresse> rechercher(
@@ -65,6 +67,7 @@ public class AdresseRepositoryPostgres implements AdresseRepository {
         searchParams.add(pageable.getPageSize());
         searchParams.add(pageable.getOffset());
 
+
         List<Adresse> adresses = jdbcTemplate.query(
                 sql,
                 adresseRowMapper,
@@ -80,11 +83,13 @@ public class AdresseRepositoryPostgres implements AdresseRepository {
                 """
                 + where;
 
-        Long total = jdbcTemplate.queryForObject(
-                countSql,
-                Long.class,
-                params.toArray()
-        );
+        long total = Optional.ofNullable(
+                jdbcTemplate.queryForObject(
+                        countSql,
+                        Long.class,
+                        params.toArray()
+                )
+        ).orElse(0L);
 
         return new PageImpl<>(
                 adresses,
@@ -134,7 +139,7 @@ public class AdresseRepositoryPostgres implements AdresseRepository {
         WHERE ST_DWithin(
             position,
             ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography,
-            50
+            250
         )
         ORDER BY distance
         LIMIT 1

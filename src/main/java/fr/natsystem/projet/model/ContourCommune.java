@@ -1,12 +1,13 @@
 package fr.natsystem.projet.model;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
 
 import java.math.BigDecimal;
 
 public record ContourCommune(
         String insee,
         String nom,
-        BigDecimal prixMoyen,
+        @Column(name="prix_m2")
+        BigDecimal prixM2,
         String contour
 ) {}

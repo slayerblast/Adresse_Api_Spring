@@ -100,7 +100,8 @@ Pour cela j'ai décidé de créer une table Tarif_Commune qui contient les donn�
 - Seuls les nature mutation correspondant au Vente son prix en compte
 - La période N correspond aux 12 derniers mois disponibles dans DVF.
 - La période N-1 correspond aux 12 mois précédant la période N.
-- Les calculs sont regroupés par code_insee.
+- Les calculs sont regroupés par id mutation.
+- On vérifie que l'agrégation de la surface reelle bati n'est pas supérieur à l'agrégation de la surface reelle bati filtré (appartement et maison)
 - Le prix moyen est calculé avec la moyenne des valeur_fonciere.
 - Le prix médian correspond à la médiane des valeur_fonciere.
 - Le prix au m² est calculé avec : Somme des valeurs foncières / Somme des surfaces bâties
@@ -115,4 +116,4 @@ Pour cette étape, comme coté base j'ai ajouté les contours, il faut aussi que
 J'ai essayé une premiere fois de charger les contours sur toute la France mais cela prenait beaucoup trop de temps et j'avais meme une erreur quand je lançais le endpoint.
 Du coup pour pouvoir afficher les contours sur toute la France j'ai du simplifier dans la base en faisait un ST_SimplifyPreserveTopology(geom, 0.001) 
 sur un autre champ que j'ai appelé geom_simple car je voulais garder une version non simplifiée. De ce fait, j'utilise la version simplifier dans ma requete api.
-J'ai aussi ajouté dans ma requete le prix moyen qui apparait dans la table de tarif des communes car j'en ai besoin pour le front pour pouvoir afficher une opacité différente par rapport au prix moyen du m2  
+J'ai aussi ajouté dans ma requete le prix moyen qui apparait dans la table de tarif des communes car j'en ai besoin pour le front pour pouvoir afficher une opacité différente par rapport au prix moyen du m2.  

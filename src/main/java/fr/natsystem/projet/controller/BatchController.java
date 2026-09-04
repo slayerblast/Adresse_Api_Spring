@@ -31,16 +31,18 @@ public class BatchController {
 
 
     @PostMapping("/batch/lancer/{innerJob}")
-    public ResponseEntity<?> startJob(
+    public ResponseEntity<Object> startJob(
             @Parameter(description = """
                     Choisissez entre :
                     - importAdresseJob
                     - importDvfJob
                     """)
-            @PathVariable("innerJob") String innerJob) {
+            @PathVariable("innerJob") String innerJob,
+            @Parameter(description = "Chemin ou nom du fichier à traiter")
+            @RequestParam(value = "inputFile", required = false) String inputFile) {
 
         JobParameters params = new JobParametersBuilder()
-                .addString("inputFile", "")
+                .addString("inputFile", inputFile == null ? "" : inputFile)
                 .addLong("startAt", System.currentTimeMillis())
                 .addString("innerJob", innerJob)
                 .toJobParameters();
@@ -55,7 +57,7 @@ public class BatchController {
     }
 
     @GetMapping("/statut/{jobExecutionId}")
-    public ResponseEntity<?> getJobStatus(@PathVariable("jobExecutionId") Long jobExecutionId) {
+    public ResponseEntity<Object> getJobStatus(@PathVariable("jobExecutionId") Long jobExecutionId) {
         JobExecution je = jobRepository.getJobExecution(jobExecutionId);
 
         if (je == null) {
@@ -67,8 +69,8 @@ public class BatchController {
                         je.getJobInstance().getJobName(),
                         je.getStatus().name(),
                         je.getExitStatus().getExitCode(),
-                        je.getExecutionContext().getString("code",""),
-                        je.getExecutionContext().getString("nameCode","")
+                        je.getExecutionContext().getString("code", ""),
+                        je.getExecutionContext().getString("nameCode", "")
                 )
         );
     }

@@ -1,11 +1,14 @@
 package fr.natsystem.projet.services;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class ChecksumUtils {
-
-    public static String sha256(String filePath) throws Exception {
+    private ChecksumUtils() {}
+    public static String sha256(String filePath)
+            throws IOException, NoSuchAlgorithmException {
 
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
@@ -20,9 +23,7 @@ public class ChecksumUtils {
         }
 
         byte[] hash = digest.digest();
-
         StringBuilder sb = new StringBuilder();
-
         for (byte b : hash) {
             sb.append(String.format("%02x", b));
         }
