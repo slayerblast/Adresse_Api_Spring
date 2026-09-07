@@ -1,6 +1,7 @@
 package fr.natsystem.projet.controller;
 
 import fr.natsystem.projet.model.JobStatusResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,16 @@ public class BatchController {
     @Qualifier("checkFileJob")
     private final Job checkFileJob;
 
-
+    @Operation(
+            summary = "Lancement du Job",
+            description = """
+                    Lance le job avec l'innerJob de traitement choisi (si l'innerJob entré est incorrect, celui ci prend importAdresseJob par défaut)
+                    - importAdresseJob : job de traitement correspondant aux fichiers de la Base d'Adresse Nationale
+                    - importDvfJob : job de traitement correspondant aux fichiers des Demande de Valeurs Foncières
+                    - inputFile (Optionnel): il faut rentrer le chemin du fichier en partant de la racine du projet"
+                    - Retrieve : Variable True/false placé dans application.properties servant à savoir si il faut télécharger le fichier en ligne si besoin (True) ou non (False)
+                    """
+    )
     @PostMapping("/batch/lancer/{innerJob}")
     public ResponseEntity<Object> startJob(
             @Parameter(description = """
