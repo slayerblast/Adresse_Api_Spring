@@ -9,6 +9,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.parameters.JobParameters;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -49,62 +51,33 @@ class InnerJobDeciderTest {
         verify(jobParameters).getString("innerJob");
     }
 
-    @Test
-    void shouldReturnImportAdresseJobWhenInnerJobIsImportAdresseJob() {
+    @ParameterizedTest(name = "[{index}] innerJob={0}, résultat attendu={1}")
+    @CsvSource(
+            value = {
+                    "importAdresseJob | importAdresseJob",
+                    "importDvfJob     | importDvfJob",
+                    "unknownJob       | importAdresseJob",
+                    "EMPTY            | importAdresseJob"
+            },
+            delimiterString = "|"
+    )
+    void shouldReturnExpectedJob(
+            String innerJobValue,
+            String expectedJob
+    ) {
+        String innerJob = "EMPTY".equals(innerJobValue)
+                ? ""
+                : innerJobValue.trim();
+
         when(jobParameters.getString("innerJob"))
-                .thenReturn("importAdresseJob");
+                .thenReturn(innerJob);
 
         FlowExecutionStatus result = decider.decide(
                 jobExecution,
                 null
         );
 
-        assertEquals("importAdresseJob", result.getName());
-
-        verify(jobParameters).getString("innerJob");
-    }
-
-    @Test
-    void shouldReturnImportDvfJobWhenInnerJobIsImportDvfJob() {
-        when(jobParameters.getString("innerJob"))
-                .thenReturn("importDvfJob");
-
-        FlowExecutionStatus result = decider.decide(
-                jobExecution,
-                null
-        );
-
-        assertEquals("importDvfJob", result.getName());
-
-        verify(jobParameters).getString("innerJob");
-    }
-
-    @Test
-    void shouldReturnImportAdresseJobByDefaultWhenInnerJobIsUnknown() {
-        when(jobParameters.getString("innerJob"))
-                .thenReturn("unknownJob");
-
-        FlowExecutionStatus result = decider.decide(
-                jobExecution,
-                null
-        );
-
-        assertEquals("importAdresseJob", result.getName());
-
-        verify(jobParameters).getString("innerJob");
-    }
-
-    @Test
-    void shouldReturnImportAdresseJobByDefaultWhenInnerJobIsEmpty() {
-        when(jobParameters.getString("innerJob"))
-                .thenReturn("");
-
-        FlowExecutionStatus result = decider.decide(
-                jobExecution,
-                null
-        );
-
-        assertEquals("importAdresseJob", result.getName());
+        assertEquals(expectedJob.trim(), result.getName());
 
         verify(jobParameters).getString("innerJob");
     }

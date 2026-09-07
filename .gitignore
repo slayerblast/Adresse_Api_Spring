@@ -15,7 +15,8 @@ data/ressource/*
 !data/csvFile/.gitkeep
 !data/FichierGz/.gitkeep
 !data/ressource/.gitkeep
-
+hs_*
+replay*
 
 ### STS ###
 .apt_generated
