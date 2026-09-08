@@ -4,6 +4,7 @@ import fr.natsystem.projet.batch.Partitioner.CodeInseePartitioner;
 import fr.natsystem.projet.batch.Partitioner.DvfPartitioner;
 import fr.natsystem.projet.batch.listener.DvfSkipListener;
 import fr.natsystem.projet.batch.listener.NestedJobStepListener;
+import fr.natsystem.projet.batch.writer.AdresseDedupWriter;
 import fr.natsystem.projet.model.Dvf;
 import fr.natsystem.projet.services.ChecksumExtractor;
 import fr.natsystem.projet.batch.listener.AdresseSkipListener;
@@ -53,6 +54,7 @@ public class StepConfig {
             JdbcPagingItemReader<Adresse> stagingReader,
             @Qualifier("jdbcWriter")
             JdbcBatchItemWriter<Adresse> jdbcWriter,
+            AdresseDedupWriter aDedupWriter,
             CompositeItemProcessor <Adresse, Adresse> compositeCsvProcessor,
             StepProgressListener listener,
             AdresseSkipListener skipListener,
@@ -62,7 +64,7 @@ public class StepConfig {
                 .transactionManager(tx)
                 .reader(stagingReader)
                 .processor(compositeCsvProcessor)
-                .writer(jdbcWriter)
+                .writer(aDedupWriter)
                 .faultTolerant()
                 .skip(ValidationException.class)
                 .skipLimit(Integer.MAX_VALUE)

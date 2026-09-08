@@ -24,13 +24,13 @@ public class StepProgressListener implements StepExecutionListener {
                         .getString("codeInsee");
 
         if(s.getJobExecution().getJobInstance().getJobName().equals("importAdresseJob")) {
-            log.info("steplistener 1er if");
+
             adresseCacheService.load(codeInsee);
         }else if(s.getJobExecution().getJobInstance().getJobName().equals("importDvfJob")) {
-            log.info("steplistener 2er if");
+
             dvfCacheService.load(codeInsee);
         }else {
-            log.info("steplistener else");
+
             adresseCacheService.load(codeInsee);
         }
 
