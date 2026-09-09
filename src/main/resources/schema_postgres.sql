@@ -1,5 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE TABLE IF NOT EXISTS adresse (
                                        id TEXT,
                                        id_fantoir TEXT,
@@ -25,6 +26,7 @@ CREATE TABLE IF NOT EXISTS adresse (
                                        certification_commune INTEGER,
                                        cad_parcelles TEXT,
                                        search_text text,
+                                       position geography(Point, 4326),
                                        CONSTRAINT uk_adresse UNIQUE (id, type_position, x, y)
     );
 

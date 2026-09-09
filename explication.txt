@@ -1,3 +1,75 @@
+Note préliminaire : au cours du développement du projet, j'ai remarqué lors de l'étape 4 que lors du lancement du batch mon script prenait 2 à 3 fois plus de temps que les autres, j'ai d'abord pensé que mon code n'était pas du tout optimisé (c'était le cas mais pas de là à avoir un x3 au niveau du temps), j'ai passé beaucoup de temps à chercher où était le problème, j'ai demandé à mes "amis" et au bout d'un moment ils m'ont dit de mettre des métriques au niveau du map/processor/requête SQL… Mais sans succès, j'ai comparé un bout de code, à savoir le Reader basique d'un collègue, et on avait le même mais lui l'exécutait presque 3 fois plus vite que moi. J'ai pensé que c'était un problème de performance matérielle (ça je le pense encore mais ce n'était pas ça le problème). Au bout d'un moment j'ai pris le projet d'un collègue et j'ai remplacé son dossier src par le mien et c'est devenu beaucoup plus rapide. Je n'ai pas bien réussi à localiser le problème, je sais seulement qu'il est à la racine du projet et je ne pense pas qu'il soit dans le pom.xml car sur mon projet lent j'avais copier-coller ses dépendances et rebuild. Donc voilà, mon problème a été résolu mais je ne saurais pas le localiser précisément. Mais voila c'est pour dire aussi qu'il y a un gros commit à la fin
+
+Pour la définition d'un doublon partiel, j'ai choisi le quadruplet ID, x et y, type position.
+id : car ça différencie les adresses de manière unique en prenant le code INSEE, le numéro de la voie, le nom de la rue sous format d'un nombre et s'il existe id_fantoir (bonne base mais pas suffisant car une adresse peut apparaître plusieurs fois avec le même identifiant mais avec des positions différentes)
+x et y : deux adresses peuvent avoir le même mais être à des positions différentes.
+Type position : deux adresses peuvent avoir le même et avoir les mêmes coordonnées mais avec un type position différent.
+Avec ce quadruplet, on a une bonne base pour repérer les doublons partiels.
+
+Pour la gestion des doublons, je gère ça dans un ItemProcessor et pas dans le Validator ou le BeanValidation car ils ne sont pas adaptés :
+BeanValidation : utilisé pour faire fonctionner les annotations Beans.
+Validator : permet de créer des violations de contraintes avec Validate (par exemple formatage incorrect).
+
+Pour les annotations Beans, je me suis référé à ce lien donné par la BAN qui nous indique les champs obligatoires : https://aitf-sig-topo.github.io/voies-adresses/files/AITF_SIG_Topo_Format_Base_Adresse_Locale_v1.3.pdf
+
+J'ai utilisé un validator pour gérer les INSEE et ID incorrects :
+-> INSEE = utilisation d'une regex trouvée sur internet pour l'INSEE
+-> ID = doit commencer par l'INSEE.
+Pour l'ID, j'ai préféré m'arrêter là car dans le format de l'ID, on voit qu'il prend au départ l'INSEE et la suite est différente si l'adresse possède un ID Fantoir ou non donc autant s'arrêter avant.
+
+Pour savoir quel doublon partiel je garde, j'ai une méthode isBetterThan() qui vérifie dans cet ordre :
+-> si le certificat est différent, je prends celui dont le certificat vaut 1
+-> si la source nom voie est différente et l'une des deux vaut "inconnue", je prends celui qui a sa source différente de "inconnue"
+-> si la source position est différente et l'une des deux vaut "inconnue", je prends celui qui a sa source différente de "inconnue"
+J'ai préféré ne pas ajouter le cad parcelle car c'est une donnée en cours de fiabilisation.
+
+Pour l'étape 3 qui consistait à charger dans un premier temps le fichier J-1 et ensuite, sans resupprimer la base, charger le fichier J et déterminer les actions à effectuer : insertion, mise à jour, suppression, ou aucune action. J'ai séparé les actions : l'insertion, la mise à jour, aucune action et l'action de suppression que j'ai mise dans un tasklet.
+Pour l'insertion, mise à jour ou aucune action, j'ai créé une hashmap formée de la clé unique (quadruplet) et l'objet adresse. Cette hashmap se situe dans mon BeforeJob car c'est la première action exécutée au lancement du job donc je charge les données déjà en base dans la hashmap et j'utilise celle-ci pour ma comparaison de doublons dans mon ItemProcessor. Le fonctionnement est le suivant :
+-> Si nouvelle adresse = retourne l'adresse + ajout à la hashmap
+-> Si doublon pur = retourne null donc aucune action
+-> Si doublon impur = j'utilise ma méthode isBetterThan()
+        -> si le doublon n'est pas meilleur = retourne null
+        -> si le doublon est meilleur = retourne le doublon + ajout à la hashmap
+
+Ensuite du côté de mon writer j'utilise un UPSERT comme ça j'insère les nouvelles adresses et je mets à jour les doublons "meilleurs" envoyés au writer.
+Pour la suppression, ce qui est demandé est de supprimer les adresses présentes dans J-1 et absentes dans J. Pour cela, j'utilise un tasklet et un hashset (utilise la clé unique comme valeur) qui va contenir les adresses déjà en base mais qui ne sera pas incrémenté comme la hashmap et du coup je fais une soustraction des deux maps et cela me donne la liste des adresses présentes dans J-1 et pas dans J et je supprime en base toutes les adresses présentes dans la liste.
+
+Pour l'étape 4, l'architecture a dû changer car il y a une contrainte niveau mémoire au niveau de la hashmap :
+-> charger 200K lignes = ok
+-> charger 26M lignes = erreur mémoire
+Donc pour cela j'ai opté pour l'utilisation d'une staging table où j'applique une première validation (BeanV + Validator) et ensuite je réutilise ma hashmap mais cette fois-ci je charge les adresses de ma staging table ayant le même code INSEE que l'adresse lue en cours. J'ai donc supprimé la hashmap du BeforeJob et je l'ai mise dans un service. Il a fallu aussi que je crée des index pour faciliter la recherche. La suppression d'adresses obsolètes est maintenant simplifiée car maintenant je fais juste une requête SQL DELETE FROM ... WHERE NOT EXISTS entre ma table métier et ma staging table. Mon architecture ressemble maintenant à ça :
+
+JOB
+├── STEP1 : Chargement des données
+│   ├── CSVReader
+│   ├── ItemProcessor
+│   │   └── Validator + BeanValidation
+│   └── StagingTableWriter
+│
+├── STEP2 : Préparation
+│   └── Tasklet
+│       └── Création des index
+│
+├── STEP3 : Intégration métier
+│   ├── StagingReader
+│   ├── ItemProcessor
+│   │   └── Gestion des doublons
+│   └── BusinessTableWriter
+│
+└── STEP4 : Nettoyage
+    └── Tasklet
+        ├── Suppression des adresses obsolètes
+        └── Nettoyage de la StagingTable
+
+Pour l'étape 6, j'ai choisi de tous faire via application.properties.
+
+Avantages :
+-> Le code déjà en place fonctionne avec sqlite et postgres
+-> rapide, je n'ai eu qu'à rajouter un schema.sql pour postgres et la configuration associée dans le properties
+
+Inconvenients :
+-> Risque d'incompatiblité si le code est amené à changer ( une probable nécessitée de créer des profils dans le futur)
+
 Etape 10 : utilisation de Partitioner
 J'ai du supprimer dans mon application.properties le reWriteBatchedInserts=true car ça me faisait des erreurs lors
 des insert de doublons.

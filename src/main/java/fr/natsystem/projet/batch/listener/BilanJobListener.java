@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.listener.JobExecutionListener;
 import org.springframework.batch.core.repository.JobRepository;
@@ -14,14 +13,12 @@ import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
-import java.io.FileWriter;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -141,7 +138,7 @@ public class BilanJobListener implements JobExecutionListener {
             writer.write("ExitStatus : " + exitStatus + "\n\n");
 
             writer.write("Début : " + parentExecution.getStartTime() + "\n");
-            writer.write("Fin    : " + jobExecution.getEndTime() + "\n");
+            writer.write("Fin   : " + jobExecution.getEndTime() + "\n");
             writer.write(
                     "Durée totale : "
                             + jobDuration.toSeconds()
@@ -217,7 +214,7 @@ public class BilanJobListener implements JobExecutionListener {
         StepExecution importStep = jobExecution.getStepExecutions()
                 .stream()
                 .filter(step ->
-                        "masterStep".equals(step.getStepName())
+                        "masterStepAdresse".equals(step.getStepName())
                                 || "masterStepDvf".equals(step.getStepName())
                 )
                 .findFirst()

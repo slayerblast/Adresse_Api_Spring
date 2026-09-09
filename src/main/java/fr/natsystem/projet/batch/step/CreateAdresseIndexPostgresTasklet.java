@@ -39,6 +39,15 @@ public class CreateAdresseIndexPostgresTasklet implements CreateIndexInterface{
                 CREATE INDEX IF NOT EXISTS idx_adresse_search
                 ON adresse
                 USING gin (search_text gin_trgm_ops);
+                """,
+                """
+                UPDATE adresse
+                SET position = ST_SetSRID(ST_MakePoint(lon, lat), 4326)::geography;
+                """,
+                """
+                CREATE IF NOT EXISTS INDEX adresse_position_idx
+                ON adresse
+                USING GIST(position);
                 """
         );
 
