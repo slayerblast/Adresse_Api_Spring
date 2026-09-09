@@ -28,8 +28,8 @@ Pour l'insertion, mise à jour ou aucune action, j'ai créé une hashmap formée
 -> Si nouvelle adresse = retourne l'adresse + ajout à la hashmap
 -> Si doublon pur = retourne null donc aucune action
 -> Si doublon impur = j'utilise ma méthode isBetterThan()
-        -> si le doublon n'est pas meilleur = retourne null
-        -> si le doublon est meilleur = retourne le doublon + ajout à la hashmap
+    -> si le doublon n'est pas meilleur = retourne null
+    -> si le doublon est meilleur = retourne le doublon + ajout à la hashmap
 
 Ensuite du côté de mon writer j'utilise un UPSERT comme ça j'insère les nouvelles adresses et je mets à jour les doublons "meilleurs" envoyés au writer.
 Pour la suppression, ce qui est demandé est de supprimer les adresses présentes dans J-1 et absentes dans J. Pour cela, j'utilise un tasklet et un hashset (utilise la clé unique comme valeur) qui va contenir les adresses déjà en base mais qui ne sera pas incrémenté comme la hashmap et du coup je fais une soustraction des deux maps et cela me donne la liste des adresses présentes dans J-1 et pas dans J et je supprime en base toutes les adresses présentes dans la liste.
@@ -114,7 +114,7 @@ Scénario sans argument :
 <2 fichiers dans le dossier -> 0 fichier dans le dossier -> param activé -> récupération en ligne -> fichier invalide -> ERROR : NO_INPUT_FILE
 
 Étape 12 : Idempotence via JobRepository `[BATCH]`
-Pour cette étape j'ai séparé mon job en deux job, un job pour le fichier qui est un FlowJob qui s'occupe du fichier avant sont importation :
+Pour cette étape j'ai séparé mon job en deux job, un job pour le fichier qui est un FlowJob qui s'occupe du fichier avant son importation :
 -> localisation avec ou sans l'argument
 -> téléchargement
 -> calcule du checksum
@@ -177,6 +177,7 @@ Pour cela j'ai décidé de créer une table Tarif_Commune qui contient les donn�
 - Le prix moyen est calculé avec la moyenne des valeur_fonciere.
 - Le prix médian correspond à la médiane des valeur_fonciere.
 - Le prix au m² est calculé avec : Somme des valeurs foncières / Somme des surfaces bâties
+- Le prix au m² d'une mutation doit être situé entre 200 et 50000 pour filtrer certains cas ou le prix affiché était abérrant (100k le m² par exemple)
 - Le nombre de transactions correspond au nombre d’id_mutation distincts.
 - Les variations comparent les résultats de N à ceux de N-1 en pourcentage.
 
