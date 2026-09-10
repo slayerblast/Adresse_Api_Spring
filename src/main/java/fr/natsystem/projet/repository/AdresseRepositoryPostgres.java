@@ -113,15 +113,19 @@ public class AdresseRepositoryPostgres implements AdresseRepository {
                 .trim();
 
         String sql = """
-       SELECT *
-       FROM adresse
-       ORDER BY similarity(search_text, ?) DESC
-       LIMIT 10;
+                SELECT
+                    *,
+                    word_similarity(?, search_text) AS score
+                FROM adresse
+                WHERE ? <% search_text
+                ORDER BY score DESC
+                LIMIT 10;
         """;
 
         return jdbcTemplate.query(
                 sql,
                 new AdresseRowMapper(),
+                search,
                 search
         );
     }
