@@ -1,10 +1,10 @@
 package fr.natsystem.projet.batch.processor;
 
 import fr.natsystem.projet.batch.listener.BilanJobListener;
+import fr.natsystem.projet.metric.BatchMetrics;
 import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.model.AdresseKey;
 import fr.natsystem.projet.services.AdresseCacheService;
-import fr.natsystem.projet.metric.BatchMetrics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
@@ -16,50 +16,47 @@ import org.springframework.stereotype.Component;
 @Component
 @StepScope
 @RequiredArgsConstructor
-public class DuplicateRulesProcessor
-        implements ItemProcessor<Adresse, Adresse>{
+public class DuplicateRulesProcessor implements ItemProcessor<Adresse, Adresse> {
 
-    private final AdresseCacheService adresseCacheService;
-    private final BilanJobListener bilanJobListener;
-    private final BatchMetrics metrics;
+  private final AdresseCacheService adresseCacheService;
+  private final BilanJobListener bilanJobListener;
+  private final BatchMetrics metrics;
 
-    @Override
-    public @Nullable Adresse process(Adresse item) {
+  @Override
+  public @Nullable Adresse process(Adresse item) {
 
-        long start = System.nanoTime();
+    long start = System.nanoTime();
 
-        try {
+    try {
 
-            AdresseKey key = item.key();
-            Adresse existing = adresseCacheService.get(key);
+      AdresseKey key = item.key();
+      Adresse existing = adresseCacheService.get(key);
 
-            if (existing == null) {
+      if (existing == null) {
 
-                adresseCacheService.put(key, item);
+        adresseCacheService.put(key, item);
 
-            } else if (existing.equals(item)) {
+      } else if (existing.equals(item)) {
 
-                bilanJobListener.getDoublonPur().incrementAndGet();
+        bilanJobListener.getDoublonPur().incrementAndGet();
 
-                item = null;
+        item = null;
 
-            } else if (item.isBetterThan(existing)) {
+      } else if (item.isBetterThan(existing)) {
 
-                adresseCacheService.put(key, item);
-                bilanJobListener.getDoublon().incrementAndGet();
+        adresseCacheService.put(key, item);
+        bilanJobListener.getDoublon().incrementAndGet();
 
-            } else {
-                bilanJobListener.getDoublon().incrementAndGet();
-                item = null;
-            }
+      } else {
+        bilanJobListener.getDoublon().incrementAndGet();
+        item = null;
+      }
 
-            return item;
+      return item;
 
-        } finally {
+    } finally {
 
-            metrics.addProcessorTime(
-                    System.nanoTime() - start);
-        }
+      metrics.addProcessorTime(System.nanoTime() - start);
     }
+  }
 }
-

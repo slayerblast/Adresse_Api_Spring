@@ -12,23 +12,20 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ChecksumExtractor implements JobParametersExtractor {
 
-    @Override
-    public JobParameters getJobParameters(Job job, StepExecution stepExecution) {
+  @Override
+  public JobParameters getJobParameters(Job job, StepExecution stepExecution) {
 
-        String checksum = stepExecution
-                .getJobExecution()
-                .getExecutionContext()
-                .getString("checksum", "");
-        String exitStatus = stepExecution
-                .getJobExecution()
-                .getExecutionContext()
-                .getString("lastDeciderStatus", "");
-        log.info("checksum dans le getJobParameters = {}",checksum);
-        return new JobParametersBuilder()
-                .addString("checksum", checksum,true)
-                .addString("lastExitStatus", exitStatus)
-                .addLong("jobExecutionId",stepExecution.getJobExecution().getId())
-                .addString("innerJob",stepExecution.getJobExecution().getJobParameters().getString("innerJob"))
-                .toJobParameters();
-    }
+    String checksum =
+        stepExecution.getJobExecution().getExecutionContext().getString("checksum", "");
+    String exitStatus =
+        stepExecution.getJobExecution().getExecutionContext().getString("lastDeciderStatus", "");
+    log.info("checksum dans le getJobParameters = {}", checksum);
+    return new JobParametersBuilder()
+        .addString("checksum", checksum, true)
+        .addString("lastExitStatus", exitStatus)
+        .addLong("jobExecutionId", stepExecution.getJobExecution().getId())
+        .addString(
+            "innerJob", stepExecution.getJobExecution().getJobParameters().getString("innerJob"))
+        .toJobParameters();
+  }
 }

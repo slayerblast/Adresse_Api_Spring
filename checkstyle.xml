@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    STRICT mode: agreed warning thresholds remain visible and their upper
+    blocking thresholds fail the build. See quality/templates/java/README.md.
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+
+    <module name="FileLength">
+        <property name="id" value="FileLengthError"/>
+        <property name="max" value="500"/>
+        <property name="severity" value="error"/>
+    </module>
+    <module name="FileLength">
+        <property name="id" value="FileLengthWarning"/>
+        <property name="max" value="400"/>
+        <property name="severity" value="warning"/>
+    </module>
+
+    <module name="TreeWalker">
+        <module name="MagicNumber">
+            <property name="ignoreNumbers" value="-1,0,1,2"/>
+            <property name="ignoreHashCodeMethod" value="true"/>
+            <property name="ignoreAnnotation" value="true"/>
+            <property name="ignoreFieldDeclaration" value="true"/>
+        </module>
+        <module name="CyclomaticComplexity">
+            <property name="max" value="20"/>
+            <property name="severity" value="error"/>
+        </module>
+        <module name="CyclomaticComplexity">
+            <property name="max" value="15"/>
+            <property name="severity" value="warning"/>
+        </module>
+        <module name="MethodLength">
+            <property name="id" value="MethodLengthError"/>
+            <property name="max" value="200"/>
+            <property name="severity" value="error"/>
+        </module>
+        <module name="MethodLength">
+            <property name="id" value="MethodLengthWarning"/>
+            <property name="max" value="100"/>
+            <property name="severity" value="warning"/>
+        </module>
+        <module name="BooleanExpressionComplexity">
+            <property name="max" value="4"/>
+            <property name="severity" value="warning"/>
+        </module>
+        <module name="BooleanExpressionComplexity">
+            <property name="id" value="BooleanExpressionComplexityError"/>
+            <property name="max" value="6"/>
+            <property name="severity" value="error"/>
+        </module>
+        <module name="NestedIfDepth">
+            <property name="max" value="3"/>
+            <property name="severity" value="warning"/>
+        </module>
+        <module name="NestedIfDepth">
+            <property name="id" value="NestedIfDepthError"/>
+            <property name="max" value="5"/>
+            <property name="severity" value="error"/>
+        </module>
+        <module name="NestedTryDepth">
+            <property name="max" value="2"/>
+            <property name="severity" value="warning"/>
+        </module>
+        <module name="ClassDataAbstractionCoupling">
+            <property name="max" value="7"/>
+            <property name="severity" value="warning"/>
+        </module>
+        <module name="ClassDataAbstractionCoupling">
+            <property name="id" value="ClassDataAbstractionCouplingError"/>
+            <property name="max" value="9"/>
+            <property name="severity" value="error"/>
+        </module>
+        <module name="ParameterNumber">
+            <property name="max" value="5"/>
+            <property name="ignoreOverriddenMethods" value="true"/>
+            <property name="severity" value="warning"/>
+        </module>
+        <module name="ParameterNumber">
+            <property name="id" value="ParameterNumberError"/>
+            <property name="max" value="7"/>
+            <property name="ignoreOverriddenMethods" value="true"/>
+            <property name="severity" value="error"/>
+        </module>
+    </module>
+</module>

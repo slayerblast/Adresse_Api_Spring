@@ -4,36 +4,36 @@ import fr.natsystem.projet.batch.mapper.AdresseRowMapper;
 import fr.natsystem.projet.batch.mapper.DvfRowMapper;
 import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.model.Dvf;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.infrastructure.item.database.JdbcPagingItemReader;
 import org.springframework.batch.infrastructure.item.database.Order;
 import org.springframework.batch.infrastructure.item.database.support.SqlitePagingQueryProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.sql.DataSource;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Slf4j
 @Configuration
 public class ReaderConfig {
-    @Value("${spring.batch.pathFile}")
-    private String pathFile;
+  @Value("${spring.batch.pathFile}")
+  private String pathFile;
 
-    @Bean
-    @StepScope
-    public JdbcPagingItemReader<Adresse> stagingReader(
-            DataSource ds,
-            @Value("#{stepExecutionContext['codeInsee']}")
-            String codeInsee)
-            throws Exception {
+  private static final int SIZE_PAGE = 10000;
 
-        SqlitePagingQueryProvider provider =new SqlitePagingQueryProvider();
+  @Bean
+  @StepScope
+  public JdbcPagingItemReader<Adresse> stagingReader(
+      DataSource ds, @Value("#{stepExecutionContext['codeInsee']}") String codeInsee)
+      throws Exception {
 
-        provider.setSelectClause("""
+    SqlitePagingQueryProvider provider = new SqlitePagingQueryProvider();
+
+    provider.setSelectClause(
+        """
             SELECT
                 id, id_fantoir, numero, rep,nom_voie, code_postal,
                 code_insee,nom_commune,code_insee_ancienne_commune,
@@ -43,37 +43,35 @@ public class ReaderConfig {
                 cad_parcelles
             """);
 
-        provider.setFromClause("FROM adresse_staging ");
+    provider.setFromClause("FROM adresse_staging ");
 
-        provider.setWhereClause("WHERE code_insee = :codeInsee ");
+    provider.setWhereClause("WHERE code_insee = :codeInsee ");
 
-        Map<String, Order> sortKeys = new LinkedHashMap<>();
-        sortKeys.put( "id",Order.ASCENDING);
-        provider.setSortKeys(sortKeys);
-        JdbcPagingItemReader<Adresse> reader = new JdbcPagingItemReader<>(ds, provider);
+    Map<String, Order> sortKeys = new LinkedHashMap<>();
+    sortKeys.put("id", Order.ASCENDING);
+    provider.setSortKeys(sortKeys);
+    JdbcPagingItemReader<Adresse> reader = new JdbcPagingItemReader<>(ds, provider);
 
+    reader.setDataSource(ds);
+    reader.setQueryProvider(provider);
+    reader.setParameterValues(Map.of("codeInsee", codeInsee));
+    reader.setPageSize(SIZE_PAGE);
+    reader.setRowMapper(new AdresseRowMapper());
+    reader.afterPropertiesSet();
 
-        reader.setDataSource(ds);
-        reader.setQueryProvider(provider);
-        reader.setParameterValues(Map.of("codeInsee", codeInsee));
-        reader.setPageSize(10000);
-        reader.setRowMapper(new AdresseRowMapper());
-        reader.afterPropertiesSet();
+    return reader;
+  }
 
-        return reader;
-    }
+  @Bean
+  @StepScope
+  public JdbcPagingItemReader<Dvf> stagingReaderDvf(
+      DataSource ds, @Value("#{stepExecutionContext['codeInsee']}") String codeInsee)
+      throws Exception {
 
-    @Bean
-    @StepScope
-    public JdbcPagingItemReader<Dvf> stagingReaderDvf(
-            DataSource ds,
-            @Value("#{stepExecutionContext['codeInsee']}")
-            String codeInsee)
-            throws Exception {
+    SqlitePagingQueryProvider provider = new SqlitePagingQueryProvider();
 
-        SqlitePagingQueryProvider provider =new SqlitePagingQueryProvider();
-
-        provider.setSelectClause("""
+    provider.setSelectClause(
+        """
                 SELECT
                     id,id_mutation,date_mutation,numero_disposition,
                     nature_mutation,valeur_fonciere,adresse_numero,
@@ -89,22 +87,22 @@ public class ReaderConfig {
                     surface_terrain,longitude,latitude
             """);
 
-        provider.setFromClause("FROM dvf_staging ");
+    provider.setFromClause("FROM dvf_staging ");
 
-        provider.setWhereClause("WHERE code_commune = :codeInsee ");
+    provider.setWhereClause("WHERE code_commune = :codeInsee ");
 
-        Map<String, Order> sortKeys = new LinkedHashMap<>();
-        sortKeys.put( "id",Order.ASCENDING);
-        provider.setSortKeys(sortKeys);
-        JdbcPagingItemReader<Dvf> reader = new JdbcPagingItemReader<>(ds, provider);
+    Map<String, Order> sortKeys = new LinkedHashMap<>();
+    sortKeys.put("id", Order.ASCENDING);
+    provider.setSortKeys(sortKeys);
+    JdbcPagingItemReader<Dvf> reader = new JdbcPagingItemReader<>(ds, provider);
 
-        reader.setDataSource(ds);
-        reader.setQueryProvider(provider);
-        reader.setParameterValues(Map.of("codeInsee", codeInsee));
-        reader.setPageSize(10000);
-        reader.setRowMapper(new DvfRowMapper());
-        reader.afterPropertiesSet();
+    reader.setDataSource(ds);
+    reader.setQueryProvider(provider);
+    reader.setParameterValues(Map.of("codeInsee", codeInsee));
+    reader.setPageSize(SIZE_PAGE);
+    reader.setRowMapper(new DvfRowMapper());
+    reader.afterPropertiesSet();
 
-        return reader;
-    }
+    return reader;
+  }
 }

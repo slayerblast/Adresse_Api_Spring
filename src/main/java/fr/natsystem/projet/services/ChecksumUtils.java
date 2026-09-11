@@ -6,28 +6,30 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class ChecksumUtils {
-    private ChecksumUtils() {}
-    public static String sha256(String filePath)
-            throws IOException, NoSuchAlgorithmException {
+  private ChecksumUtils() {}
 
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+  private static final int TAILLE_BUFFER = 8192;
 
-        try (FileInputStream fis = new FileInputStream(filePath)) {
+  public static String sha256(String filePath) throws IOException, NoSuchAlgorithmException {
 
-            byte[] buffer = new byte[8192];
-            int bytesRead;
+    MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-            while ((bytesRead = fis.read(buffer)) != -1) {
-                digest.update(buffer, 0, bytesRead);
-            }
-        }
+    try (FileInputStream fis = new FileInputStream(filePath)) {
 
-        byte[] hash = digest.digest();
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hash) {
-            sb.append(String.format("%02x", b));
-        }
+      byte[] buffer = new byte[TAILLE_BUFFER];
+      int bytesRead;
 
-        return sb.toString();
+      while ((bytesRead = fis.read(buffer)) != -1) {
+        digest.update(buffer, 0, bytesRead);
+      }
     }
+
+    byte[] hash = digest.digest();
+    StringBuilder sb = new StringBuilder();
+    for (byte b : hash) {
+      sb.append(String.format("%02x", b));
+    }
+
+    return sb.toString();
+  }
 }

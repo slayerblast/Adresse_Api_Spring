@@ -2,14 +2,14 @@ package fr.natsystem.projet.batch.step;
 
 import fr.natsystem.projet.batch.Partitioner.CodeInseePartitioner;
 import fr.natsystem.projet.batch.Partitioner.DvfPartitioner;
+import fr.natsystem.projet.batch.listener.AdresseSkipListener;
 import fr.natsystem.projet.batch.listener.DvfSkipListener;
 import fr.natsystem.projet.batch.listener.NestedJobStepListener;
+import fr.natsystem.projet.batch.listener.StepProgressListener;
 import fr.natsystem.projet.batch.writer.AdresseDedupWriter;
+import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.model.Dvf;
 import fr.natsystem.projet.services.ChecksumExtractor;
-import fr.natsystem.projet.batch.listener.AdresseSkipListener;
-import fr.natsystem.projet.batch.listener.StepProgressListener;
-import fr.natsystem.projet.model.Adresse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.job.Job;
 import org.springframework.batch.core.launch.JobOperator;
@@ -34,208 +34,206 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Configuration
 public class StepConfig {
 
-    @Value("${workerSize}")
-    private int workerSize;
+  @Value("${workerSize}")
+  private int workerSize;
 
-    @Bean
-    public Step helloStep(JobRepository jobRepository, PlatformTransactionManager txManager) {
-        return new StepBuilder("helloStep", jobRepository)
-                .tasklet((contribution, chunkContext) -> {
-                    log.info("=== Hello, Spring Batch ! ===");
-                    return RepeatStatus.FINISHED;
-                }, txManager)
-                .build();
-    }
+  @Value("${spring.batch.pgchunk}")
+  private int pgchunk;
 
-    @Bean
-    public Step importAdresseStep(
-            JobRepository repo,
-            PlatformTransactionManager tx,
-            JdbcPagingItemReader<Adresse> stagingReader,
-            @Qualifier("jdbcWriter")
-            JdbcBatchItemWriter<Adresse> jdbcWriter,
-            AdresseDedupWriter aDedupWriter,
-            CompositeItemProcessor <Adresse, Adresse> compositeCsvProcessor,
-            StepProgressListener listener,
-            AdresseSkipListener skipListener,
-            ChunkListener metricChunkListener) {
-        return new StepBuilder("importAdresseStep", repo)
-                .<Adresse, Adresse>chunk(1000)
-                .transactionManager(tx)
-                .reader(stagingReader)
-                .processor(compositeCsvProcessor)
-                .writer(aDedupWriter)
-                .faultTolerant()
-                .skip(ValidationException.class)
-                .skipLimit(Integer.MAX_VALUE)
-                .listener(listener)
-                .listener(skipListener)
-                .listener(metricChunkListener)
-                .build();
+  @Bean
+  public Step helloStep(JobRepository jobRepository, PlatformTransactionManager txManager) {
+    return new StepBuilder("helloStep", jobRepository)
+        .tasklet(
+            (contribution, chunkContext) -> {
+              log.info("=== Hello, Spring Batch ! ===");
+              return RepeatStatus.FINISHED;
+            },
+            txManager)
+        .build();
+  }
 
-    }
+  @Bean
+  public Step importAdresseStep(
+      JobRepository repo,
+      PlatformTransactionManager tx,
+      JdbcPagingItemReader<Adresse> stagingReader,
+      @Qualifier("jdbcWriter") JdbcBatchItemWriter<Adresse> jdbcWriter,
+      AdresseDedupWriter aDedupWriter,
+      CompositeItemProcessor<Adresse, Adresse> compositeCsvProcessor,
+      StepProgressListener listener,
+      AdresseSkipListener skipListener,
+      ChunkListener metricChunkListener) {
+    return new StepBuilder("importAdresseStep", repo)
+        .<Adresse, Adresse>chunk(pgchunk)
+        .transactionManager(tx)
+        .reader(stagingReader)
+        .processor(compositeCsvProcessor)
+        .writer(aDedupWriter)
+        .faultTolerant()
+        .skip(ValidationException.class)
+        .skipLimit(Integer.MAX_VALUE)
+        .listener(listener)
+        .listener(skipListener)
+        .listener(metricChunkListener)
+        .build();
+  }
 
-    @Bean
-    public Step importDvfStep(
-            JobRepository repo,
-            PlatformTransactionManager tx,
-            JdbcPagingItemReader<Dvf> stagingReaderDvf,
-            @Qualifier("jdbcWriterDvf")
-            JdbcBatchItemWriter<Dvf> jdbcWriter,
-            ValidatingItemProcessor<Dvf> validatingProcessorDvf,
-            StepProgressListener listener,
-            DvfSkipListener skipListener,
-            ChunkListener metricChunkListener) {
-        return new StepBuilder("importDvfStep", repo)
-                .<Dvf, Dvf>chunk(1000)
-                .transactionManager(tx)
-                .reader(stagingReaderDvf)
-                .processor(validatingProcessorDvf)
-                .writer(jdbcWriter)
-                .faultTolerant()
-                .skip(ValidationException.class)
-                .skipLimit(Integer.MAX_VALUE)
-                .listener(listener)
-                .listener(skipListener)
-                .listener(metricChunkListener)
-                .build();
+  @Bean
+  public Step importDvfStep(
+      JobRepository repo,
+      PlatformTransactionManager tx,
+      JdbcPagingItemReader<Dvf> stagingReaderDvf,
+      @Qualifier("jdbcWriterDvf") JdbcBatchItemWriter<Dvf> jdbcWriter,
+      ValidatingItemProcessor<Dvf> validatingProcessorDvf,
+      StepProgressListener listener,
+      DvfSkipListener skipListener,
+      ChunkListener metricChunkListener) {
+    return new StepBuilder("importDvfStep", repo)
+        .<Dvf, Dvf>chunk(pgchunk)
+        .transactionManager(tx)
+        .reader(stagingReaderDvf)
+        .processor(validatingProcessorDvf)
+        .writer(jdbcWriter)
+        .faultTolerant()
+        .skip(ValidationException.class)
+        .skipLimit(Integer.MAX_VALUE)
+        .listener(listener)
+        .listener(skipListener)
+        .listener(metricChunkListener)
+        .build();
+  }
 
-    }
+  @Bean
+  public Step suppressionObsoleteStep(
+      JobRepository jobRepository,
+      PlatformTransactionManager transactionManager,
+      SuppressionObsoleteTasklet suppressionObsoleteTasklet) {
 
-    @Bean
-    public Step suppressionObsoleteStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager,
-            SuppressionObsoleteTasklet suppressionObsoleteTasklet) {
+    return new StepBuilder("suppressionObsoleteStep", jobRepository)
+        .tasklet(suppressionObsoleteTasklet, transactionManager)
+        .build();
+  }
 
-        return new StepBuilder(
-                "suppressionObsoleteStep",
-                jobRepository)
-                .tasklet(
-                        suppressionObsoleteTasklet,
-                        transactionManager)
-                .build();
-    }
+  @Bean
+  public Step checksumStep(
+      JobRepository jobRepository,
+      PlatformTransactionManager transactionManager,
+      ChecksumTasklet checksumTasklet) {
 
-    @Bean
-    public Step checksumStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager,
-            ChecksumTasklet checksumTasklet ) {
+    return new StepBuilder("checksumStep", jobRepository)
+        .tasklet(checksumTasklet, transactionManager)
+        .build();
+  }
 
-        return new StepBuilder(
-                "checksumStep",
-                jobRepository)
-                .tasklet(checksumTasklet, transactionManager)
-                .build();
-    }
+  @Bean
+  public Step csvToStagingStep(
+      JobRepository jobRepository,
+      PlatformTransactionManager transactionManager,
+      CsvToStagingTasklet csvToStagingTasklet) {
+    return new StepBuilder("csvToStagingStep", jobRepository)
+        .tasklet(csvToStagingTasklet, transactionManager)
+        .build();
+  }
 
-    @Bean
-    public Step csvToStagingStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager,
-            CsvToStagingTasklet csvToStagingTasklet){
-        return new StepBuilder("csvToStagingStep",jobRepository)
-                .tasklet(csvToStagingTasklet, transactionManager)
-                .build();
-    }
+  @Bean
+  public Step createStagingIndexStep(
+      JobRepository jobRepository,
+      PlatformTransactionManager transactionManager,
+      CreateStagingIndexTasklet createStagingIndexTasklet) {
 
-    @Bean
-    public Step createStagingIndexStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager,
-            CreateStagingIndexTasklet createStagingIndexTasklet
-            ) {
+    return new StepBuilder("createStagingIndexStep", jobRepository)
+        .tasklet(createStagingIndexTasklet, transactionManager)
+        .build();
+  }
 
-        return new StepBuilder("createStagingIndexStep", jobRepository)
-                .tasklet(createStagingIndexTasklet, transactionManager)
-                .build();
-    }
+  @Bean
+  public Step masterStepAdresse(
+      JobRepository repo,
+      CodeInseePartitioner partitioner,
+      Step importAdresseStep,
+      @Qualifier("batchTaskExecutor") TaskExecutor taskExecutor) {
+    return new StepBuilder("masterStepAdresse", repo)
+        .partitioner("importAdresseStep", partitioner)
+        .step(importAdresseStep) // step template pour chaque worker
+        .gridSize(workerSize)
+        .taskExecutor(taskExecutor)
+        .build();
+  }
 
-    @Bean
-    public Step masterStepAdresse(JobRepository repo,
-                           CodeInseePartitioner partitioner,
-                           Step importAdresseStep,
-                           @Qualifier("batchTaskExecutor")
-                           TaskExecutor taskExecutor) {
-        return new StepBuilder("masterStepAdresse", repo)
-                .partitioner("importAdresseStep", partitioner)
-                .step(importAdresseStep)       // step template pour chaque worker
-                .gridSize(workerSize)
-                .taskExecutor(taskExecutor)
-                .build();
-    }
+  @Bean
+  public Step masterStepDvf(
+      JobRepository repo,
+      DvfPartitioner partitioner,
+      Step importDvfStep,
+      @Qualifier("batchTaskExecutor") TaskExecutor taskExecutor) {
+    return new StepBuilder("masterStepDvf", repo)
+        .partitioner("importDvfStep", partitioner)
+        .step(importDvfStep) // step template pour chaque worker
+        .gridSize(workerSize)
+        .taskExecutor(taskExecutor)
+        .build();
+  }
 
-    @Bean
-    public Step masterStepDvf(JobRepository repo,
-                           DvfPartitioner partitioner,
-                           Step importDvfStep,
-                           @Qualifier("batchTaskExecutor")
-                           TaskExecutor taskExecutor) {
-        return new StepBuilder("masterStepDvf", repo)
-                .partitioner("importDvfStep", partitioner)
-                .step(importDvfStep)       // step template pour chaque worker
-                .gridSize(workerSize)
-                .taskExecutor(taskExecutor)
-                .build();
-    }
+  @Bean
+  public Step createAdresseIndexStep(
+      JobRepository jobRepository,
+      PlatformTransactionManager transactionManager,
+      CreateIndexInterface createIndexInterface) {
 
-    @Bean
-    public Step createAdresseIndexStep(
-            JobRepository jobRepository,
-            PlatformTransactionManager transactionManager,
-            CreateIndexInterface createIndexInterface
-    ) {
+    return new StepBuilder("createAdresseIndexStep", jobRepository)
+        .tasklet(createIndexInterface, transactionManager)
+        .build();
+  }
 
-        return new StepBuilder("createAdresseIndexStep", jobRepository)
-                .tasklet(createIndexInterface, transactionManager)
-                .build();
-    }
+  @Bean
+  public Step downloadStep(
+      JobRepository jobRepository,
+      PlatformTransactionManager transactionManager,
+      DownloadTasklet downloadTasklet) {
 
-    @Bean
-    public Step downloadStep(JobRepository jobRepository,
-                             PlatformTransactionManager transactionManager,
-                             DownloadTasklet downloadTasklet) {
+    return new StepBuilder("downloadStep", jobRepository)
+        .tasklet(downloadTasklet, transactionManager)
+        .build();
+  }
 
-        return new StepBuilder("downloadStep", jobRepository)
-                .tasklet(downloadTasklet, transactionManager)
-                .build();
-    }
+  @Bean
+  public Step dvfSqlRequestStep(
+      JobRepository jobRepository,
+      PlatformTransactionManager transactionManager,
+      DvfSqlRequestTasklet dvfSqlRequestTasklet) {
 
-    @Bean
-    public Step dvfSqlRequestStep(JobRepository jobRepository,
-                             PlatformTransactionManager transactionManager,
-                          DvfSqlRequestTasklet dvfSqlRequestTasklet ) {
+    return new StepBuilder("dvfSqlRequestStep", jobRepository)
+        .tasklet(dvfSqlRequestTasklet, transactionManager)
+        .build();
+  }
 
-        return new StepBuilder("dvfSqlRequestStep", jobRepository)
-                .tasklet(dvfSqlRequestTasklet, transactionManager)
-                .build();
-    }
+  @Bean
+  public Step adresseJobStep(
+      JobRepository repo,
+      NestedJobStepListener listener,
+      PlatformTransactionManager tx,
+      @Qualifier("jobOperator") JobOperator launcher,
+      Job importAdresseJob) {
+    return new StepBuilder("adresseJobStep", repo)
+        .job(importAdresseJob)
+        .listener(listener)
+        .operator(launcher)
+        .parametersExtractor(new ChecksumExtractor())
+        .build();
+  }
 
-
-    @Bean
-    public Step adresseJobStep(JobRepository repo,
-                               NestedJobStepListener listener,
-                               PlatformTransactionManager tx,
-                               @Qualifier("jobOperator") JobOperator launcher, Job importAdresseJob) {
-        return new StepBuilder("adresseJobStep", repo)
-                .job(importAdresseJob)
-                .listener(listener)
-                .operator(launcher)
-                .parametersExtractor(new ChecksumExtractor())
-                .build();
-    }
-    @Bean
-    public Step dvfJobStep(JobRepository repo,
-                               NestedJobStepListener listener,
-                               PlatformTransactionManager tx,
-                               @Qualifier("jobOperator") JobOperator launcher, Job importDvfJob) {
-        return new StepBuilder("dvfJobStep", repo)
-                .job(importDvfJob)
-                .listener(listener)
-                .operator(launcher)
-                .parametersExtractor(new ChecksumExtractor())
-                .build();
-    }
-
+  @Bean
+  public Step dvfJobStep(
+      JobRepository repo,
+      NestedJobStepListener listener,
+      PlatformTransactionManager tx,
+      @Qualifier("jobOperator") JobOperator launcher,
+      Job importDvfJob) {
+    return new StepBuilder("dvfJobStep", repo)
+        .job(importDvfJob)
+        .listener(listener)
+        .operator(launcher)
+        .parametersExtractor(new ChecksumExtractor())
+        .build();
+  }
 }

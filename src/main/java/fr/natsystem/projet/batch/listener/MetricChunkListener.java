@@ -12,23 +12,21 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MetricChunkListener implements ChunkListener {
 
-    private final BatchMetrics metrics;
+  private final BatchMetrics metrics;
 
-    private long start;
+  private long start;
 
-    @Override
-    public void beforeChunk(Chunk chunk) {
-        start = System.currentTimeMillis();
-    }
+  @Override
+  public void beforeChunk(Chunk chunk) {
+    start = System.currentTimeMillis();
+  }
 
-    @Override
-    public void afterChunk(Chunk chunk) {
+  @Override
+  public void afterChunk(Chunk chunk) {
 
-        log.info(
-                "chunk={}ms processor={}ms",
-                System.currentTimeMillis() - start,
-                metrics.consumeProcessorMs()
-        );
-    }
-
+    log.info(
+        "chunk={}ms processor={}ms",
+        System.currentTimeMillis() - start,
+        metrics.consumeProcessorMs());
+  }
 }

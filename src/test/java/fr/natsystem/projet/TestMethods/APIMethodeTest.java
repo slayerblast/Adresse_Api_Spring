@@ -1,75 +1,73 @@
 package fr.natsystem.projet.TestMethods;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.repository.AdresseRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestConstructor;
 
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @SpringBootTest
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
 @RequiredArgsConstructor
 class APIMethodeTest {
-    private final AdresseRepository adresseRepository;
-    @Test
-    void testerTempsReponseFindProchesSur100Points() {
 
-        double latitudeInitiale = 48.8566;
-        double longitudeInitiale = 2.3522;
-        int nombrePoints = 100;
+  private static final double LATITUDE_INITIALE = 48.8566;
+  private static final double LONGITUDE_INITIALE = 2.3522;
+  private static final int NOMBRE_POINTS = 100;
 
-        // Warm-up
-        adresseRepository.findProches(
-                latitudeInitiale,
-                longitudeInitiale
-        );
+  private static final double INCREMENT_COORDONNEES = 0.00001;
+  private static final double NANOSECONDS_TO_MILLISECONDS = 1_000_000.0;
 
-        long debut = System.nanoTime();
+  private final AdresseRepository adresseRepository;
 
-        int nombreResultats = 0;
+  @Test
+  void testerTempsReponseFindProchesSur100Points() {
 
-        for (int i = 0; i < nombrePoints; i++) {
+    double latitudeInitiale = LATITUDE_INITIALE;
+    double longitudeInitiale = LONGITUDE_INITIALE;
+    int nombrePoints = NOMBRE_POINTS;
 
-            double lat = latitudeInitiale + (i * 0.00001);
-            double lon = longitudeInitiale + (i * 0.00001);
+    // Warm-up
+    adresseRepository.findProches(latitudeInitiale, longitudeInitiale);
 
-            List<Adresse> adresses =
-                    adresseRepository.findProches(lat, lon);
+    long debut = System.nanoTime();
 
-            if (!adresses.isEmpty()) {
-                nombreResultats++;
-            }
-        }
+    int nombreResultats = 0;
 
-        long fin = System.nanoTime();
+    for (int i = 0; i < nombrePoints; i++) {
 
-        double dureeTotaleMs =
-                (fin - debut) / 1_000_000.0;
+      double lat = latitudeInitiale + (i * INCREMENT_COORDONNEES);
+      double lon = longitudeInitiale + (i * INCREMENT_COORDONNEES);
 
-        double dureeMoyenneMs =
-                dureeTotaleMs / nombrePoints;
+      List<Adresse> adresses = adresseRepository.findProches(lat, lon);
 
-        System.out.printf(
-                """
-                
-                ===== TEST POSTGIS =====
-                Nombre de points       : %d
-                Points avec résultat   : %d
-                Durée totale           : %.2f ms
-                Durée moyenne          : %.2f ms
-                ========================
-                %n
-                """,
-                nombrePoints,
-                nombreResultats,
-                dureeTotaleMs,
-                dureeMoyenneMs
-        );
-        assertTrue(nombreResultats > 0);
+      if (!adresses.isEmpty()) {
+        nombreResultats++;
+      }
     }
+
+    long fin = System.nanoTime();
+
+    double dureeTotaleMs = (fin - debut) / NANOSECONDS_TO_MILLISECONDS;
+
+    double dureeMoyenneMs = dureeTotaleMs / nombrePoints;
+
+    System.out.printf(
+        """
+
+                        ===== TEST POSTGIS =====
+                        Nombre de points       : %d
+                        Points avec résultat   : %d
+                        Durée totale           : %.2f ms
+                        Durée moyenne          : %.2f ms
+                        ========================
+                        %n
+                        """,
+        nombrePoints, nombreResultats, dureeTotaleMs, dureeMoyenneMs);
+    assertTrue(nombreResultats > 0);
+  }
 }

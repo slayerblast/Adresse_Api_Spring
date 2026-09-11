@@ -1,19 +1,5 @@
 package fr.natsystem.projet.Decider;
 
-import fr.natsystem.projet.batch.Decider.FileCountDecider;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.springframework.batch.core.job.JobExecution;
-import org.springframework.batch.core.job.parameters.JobParameters;
-import org.springframework.batch.core.job.flow.FlowExecutionStatus;
-
-import org.springframework.batch.infrastructure.item.ExecutionContext;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,291 +7,234 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import fr.natsystem.projet.batch.Decider.FileCountDecider;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.batch.core.job.JobExecution;
+import org.springframework.batch.core.job.flow.FlowExecutionStatus;
+import org.springframework.batch.core.job.parameters.JobParameters;
+import org.springframework.batch.infrastructure.item.ExecutionContext;
+import org.springframework.test.util.ReflectionTestUtils;
+
 class FileCountDeciderTest {
 
-    @TempDir
-    Path temporaryDirectory;
+  @TempDir Path temporaryDirectory;
 
-    private FileCountDecider decider;
+  private FileCountDecider decider;
 
-    @BeforeEach
-    void setUp() {
-        decider = new FileCountDecider();
+  private static final int TAILLE_SHA = 64;
 
-        ReflectionTestUtils.setField(
-                decider,
-                "pathFile",
-                temporaryDirectory.toString()
-        );
-    }
+  @BeforeEach
+  void setUp() {
+    decider = new FileCountDecider();
 
-    @Test
-    void shouldReturnOkArgNotEmptyWhenInputFileIsProvided() {
-        setRetriever(false);
+    ReflectionTestUtils.setField(decider, "pathFile", temporaryDirectory.toString());
+  }
 
-        JobExecution jobExecution = createJobExecution("adresses.csv");
+  @Test
+  void shouldReturnOkArgNotEmptyWhenInputFileIsProvided() {
+    setRetriever(false);
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("adresses.csv");
 
-        assertEquals("OK_ARG_NOT_EMPTY", result.getName());
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-        assertEquals(
-                "OK_ARG_NOT_EMPTY",
-                jobExecution.getExecutionContext()
-                        .getString("lastDeciderStatus")
-        );
-    }
+    assertEquals("OK_ARG_NOT_EMPTY", result.getName());
 
-    @Test
-    void shouldGivePriorityToInputFileEvenWhenSeveralFilesExist()
-            throws Exception {
+    assertEquals(
+        "OK_ARG_NOT_EMPTY", jobExecution.getExecutionContext().getString("lastDeciderStatus"));
+  }
 
-        setRetriever(false);
+  @Test
+  void shouldGivePriorityToInputFileEvenWhenSeveralFilesExist() throws Exception {
 
-        createFile("file1.csv", "contenu 1");
-        createFile("file2.csv", "contenu 2");
+    setRetriever(false);
 
-        JobExecution jobExecution =
-                createJobExecution("fichier-demande.csv");
+    createFile("file1.csv", "contenu 1");
+    createFile("file2.csv", "contenu 2");
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("fichier-demande.csv");
 
-        assertEquals("OK_ARG_NOT_EMPTY", result.getName());
-    }
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-    @Test
-    void shouldReturnMultipleFilesFoundWhenSeveralFilesExist()
-            throws Exception {
+    assertEquals("OK_ARG_NOT_EMPTY", result.getName());
+  }
 
-        setRetriever(false);
+  @Test
+  void shouldReturnMultipleFilesFoundWhenSeveralFilesExist() throws Exception {
 
-        createFile("file1.csv", "contenu 1");
-        createFile("file2.csv", "contenu 2");
+    setRetriever(false);
 
-        JobExecution jobExecution = createJobExecution("");
+    createFile("file1.csv", "contenu 1");
+    createFile("file2.csv", "contenu 2");
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("");
 
-        assertEquals("MULTIPLE_FILES_FOUND", result.getName());
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-        assertEquals(
-                "MULTIPLE_FILES_FOUND",
-                jobExecution.getExecutionContext()
-                        .getString("lastDeciderStatus")
-        );
-    }
+    assertEquals("MULTIPLE_FILES_FOUND", result.getName());
 
-    @Test
-    void shouldReturnMultipleFilesFoundRegardlessOfRetrieverWhenSeveralFilesExist()
-            throws Exception {
+    assertEquals(
+        "MULTIPLE_FILES_FOUND", jobExecution.getExecutionContext().getString("lastDeciderStatus"));
+  }
 
-        setRetriever(true);
+  @Test
+  void shouldReturnMultipleFilesFoundRegardlessOfRetrieverWhenSeveralFilesExist() throws Exception {
 
-        createFile("file1.csv", "contenu 1");
-        createFile("file2.csv", "contenu 2");
+    setRetriever(true);
 
-        JobExecution jobExecution = createJobExecution("");
+    createFile("file1.csv", "contenu 1");
+    createFile("file2.csv", "contenu 2");
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("");
 
-        assertEquals("MULTIPLE_FILES_FOUND", result.getName());
-    }
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-    @Test
-    void shouldReturnNoInputFileWhenDirectoryIsEmptyAndRetrieverIsDisabled() {
-        setRetriever(false);
+    assertEquals("MULTIPLE_FILES_FOUND", result.getName());
+  }
 
-        JobExecution jobExecution = createJobExecution("");
+  @Test
+  void shouldReturnNoInputFileWhenDirectoryIsEmptyAndRetrieverIsDisabled() {
+    setRetriever(false);
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("");
 
-        assertEquals("NO_INPUT_FILE", result.getName());
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-        assertEquals(
-                "NO_INPUT_FILE",
-                jobExecution.getExecutionContext()
-                        .getString("lastDeciderStatus")
-        );
-    }
+    assertEquals("NO_INPUT_FILE", result.getName());
 
-    @Test
-    void shouldReturnOkForRetrieveWhenDirectoryIsEmptyAndRetrieverIsEnabled() {
-        setRetriever(true);
+    assertEquals(
+        "NO_INPUT_FILE", jobExecution.getExecutionContext().getString("lastDeciderStatus"));
+  }
 
-        JobExecution jobExecution = createJobExecution("");
+  @Test
+  void shouldReturnOkForRetrieveWhenDirectoryIsEmptyAndRetrieverIsEnabled() {
+    setRetriever(true);
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("");
 
-        assertEquals("OK_FOR_RETRIEVE", result.getName());
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-        assertEquals(
-                "OK_FOR_RETRIEVE",
-                jobExecution.getExecutionContext()
-                        .getString("lastDeciderStatus")
-        );
-    }
+    assertEquals("OK_FOR_RETRIEVE", result.getName());
 
-    @Test
-    void shouldReturnOkForImportAndStoreChecksumWhenOneFileExists()
-            throws Exception {
+    assertEquals(
+        "OK_FOR_RETRIEVE", jobExecution.getExecutionContext().getString("lastDeciderStatus"));
+  }
 
-        setRetriever(false);
+  @Test
+  void shouldReturnOkForImportAndStoreChecksumWhenOneFileExists() throws Exception {
 
-        createFile(
-                "input.csv",
-                "id;nom\n1;Dupont"
-        );
+    setRetriever(false);
 
-        JobExecution jobExecution = createJobExecution("");
+    createFile("input.csv", "id;nom\n1;Dupont");
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("");
 
-        assertEquals("OK_FOR_IMPORT", result.getName());
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-        ExecutionContext executionContext =
-                jobExecution.getExecutionContext();
+    assertEquals("OK_FOR_IMPORT", result.getName());
 
-        assertTrue(executionContext.containsKey("checksum"));
+    ExecutionContext executionContext = jobExecution.getExecutionContext();
 
-        String checksum =
-                executionContext.getString("checksum");
+    assertTrue(executionContext.containsKey("checksum"));
 
-        assertNotNull(checksum);
-        assertFalse(checksum.isBlank());
+    String checksum = executionContext.getString("checksum");
 
-        // Un checksum SHA-256 en représentation hexadécimale
-        // contient normalement 64 caractères.
-        assertEquals(64, checksum.length());
+    assertNotNull(checksum);
+    assertFalse(checksum.isBlank());
 
-        assertEquals(
-                "OK_FOR_IMPORT",
-                executionContext.getString("lastDeciderStatus")
-        );
-    }
+    // Un checksum SHA-256 en représentation hexadécimale
+    // contient normalement 64 caractères.
+    assertEquals(TAILLE_SHA, checksum.length());
 
-    @Test
-    void shouldReturnMultipleFilesFoundWhenOneFileExistsAndRetrieverIsEnabled()
-            throws Exception {
+    assertEquals("OK_FOR_IMPORT", executionContext.getString("lastDeciderStatus"));
+  }
 
-        setRetriever(true);
+  @Test
+  void shouldReturnMultipleFilesFoundWhenOneFileExistsAndRetrieverIsEnabled() throws Exception {
 
-        createFile("input.csv", "contenu du fichier");
+    setRetriever(true);
 
-        JobExecution jobExecution = createJobExecution("");
+    createFile("input.csv", "contenu du fichier");
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("");
 
-        assertEquals("MULTIPLE_FILES_FOUND", result.getName());
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-        assertFalse(
-                jobExecution.getExecutionContext()
-                        .containsKey("checksum")
-        );
+    assertEquals("MULTIPLE_FILES_FOUND", result.getName());
 
-        assertEquals(
-                "MULTIPLE_FILES_FOUND",
-                jobExecution.getExecutionContext()
-                        .getString("lastDeciderStatus")
-        );
-    }
+    assertFalse(jobExecution.getExecutionContext().containsKey("checksum"));
 
-    @Test
-    void shouldTreatBlankInputFileAsEmpty() {
-        setRetriever(false);
+    assertEquals(
+        "MULTIPLE_FILES_FOUND", jobExecution.getExecutionContext().getString("lastDeciderStatus"));
+  }
 
-        JobExecution jobExecution =
-                createJobExecution("   ");
+  @Test
+  void shouldTreatBlankInputFileAsEmpty() {
+    setRetriever(false);
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("   ");
 
-        assertEquals("NO_INPUT_FILE", result.getName());
-    }
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-    @Test
-    void shouldIgnoreSubdirectoriesWhenCountingFiles()
-            throws Exception {
+    assertEquals("NO_INPUT_FILE", result.getName());
+  }
 
-        setRetriever(false);
+  @Test
+  void shouldIgnoreSubdirectoriesWhenCountingFiles() throws Exception {
 
-        Files.createDirectory(
-                temporaryDirectory.resolve("sous-dossier")
-        );
+    setRetriever(false);
 
-        JobExecution jobExecution = createJobExecution("");
+    Files.createDirectory(temporaryDirectory.resolve("sous-dossier"));
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("");
 
-        assertEquals("NO_INPUT_FILE", result.getName());
-    }
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-    @Test
-    void shouldCountOnlyFilesAndIgnoreSubdirectories()
-            throws Exception {
+    assertEquals("NO_INPUT_FILE", result.getName());
+  }
 
-        setRetriever(false);
+  @Test
+  void shouldCountOnlyFilesAndIgnoreSubdirectories() throws Exception {
 
-        createFile("input.csv", "contenu");
+    setRetriever(false);
 
-        Files.createDirectory(
-                temporaryDirectory.resolve("sous-dossier")
-        );
+    createFile("input.csv", "contenu");
 
-        JobExecution jobExecution = createJobExecution("");
+    Files.createDirectory(temporaryDirectory.resolve("sous-dossier"));
 
-        FlowExecutionStatus result =
-                decider.decide(jobExecution, null);
+    JobExecution jobExecution = createJobExecution("");
 
-        assertEquals("OK_FOR_IMPORT", result.getName());
-    }
+    FlowExecutionStatus result = decider.decide(jobExecution, null);
 
-    private void setRetriever(boolean retriever) {
-        ReflectionTestUtils.setField(
-                decider,
-                "retriever",
-                retriever
-        );
-    }
+    assertEquals("OK_FOR_IMPORT", result.getName());
+  }
 
-    private void createFile(
-            String fileName,
-            String content
-    ) throws Exception {
+  private void setRetriever(boolean retriever) {
+    ReflectionTestUtils.setField(decider, "retriever", retriever);
+  }
 
-        Files.writeString(
-                temporaryDirectory.resolve(fileName),
-                content
-        );
-    }
+  private void createFile(String fileName, String content) throws Exception {
 
-    private JobExecution createJobExecution(String inputFile) {
-        JobExecution jobExecution =
-                mock(JobExecution.class);
+    Files.writeString(temporaryDirectory.resolve(fileName), content);
+  }
 
-        JobParameters jobParameters =
-                mock(JobParameters.class);
+  private JobExecution createJobExecution(String inputFile) {
+    JobExecution jobExecution = mock(JobExecution.class);
 
-        ExecutionContext executionContext =
-                new ExecutionContext();
+    JobParameters jobParameters = mock(JobParameters.class);
 
-        when(jobExecution.getJobParameters())
-                .thenReturn(jobParameters);
+    ExecutionContext executionContext = new ExecutionContext();
 
-        when(jobExecution.getExecutionContext())
-                .thenReturn(executionContext);
+    when(jobExecution.getJobParameters()).thenReturn(jobParameters);
 
-        when(jobParameters.getString("inputFile", ""))
-                .thenReturn(inputFile);
+    when(jobExecution.getExecutionContext()).thenReturn(executionContext);
 
-        return jobExecution;
-    }
+    when(jobParameters.getString("inputFile", "")).thenReturn(inputFile);
+
+    return jobExecution;
+  }
 }

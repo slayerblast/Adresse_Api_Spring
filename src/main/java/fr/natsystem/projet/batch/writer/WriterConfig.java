@@ -2,6 +2,7 @@ package fr.natsystem.projet.batch.writer;
 
 import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.model.Dvf;
+import javax.sql.DataSource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.infrastructure.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.infrastructure.item.database.builder.JdbcBatchItemWriterBuilder;
@@ -9,20 +10,17 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import javax.sql.DataSource;
-
 @Slf4j
 @Configuration
 public class WriterConfig {
 
-
-    @Bean(name = "jdbcWriter")
-    @Profile("postgres")
-    public JdbcBatchItemWriter<Adresse> jdbcPostgresWriter(
-            DataSource ds) {
-        return new JdbcBatchItemWriterBuilder<Adresse>()
-                .dataSource(ds)
-                .sql("""   
+  @Bean(name = "jdbcWriter")
+  @Profile("postgres")
+  public JdbcBatchItemWriter<Adresse> jdbcPostgresWriter(DataSource ds) {
+    return new JdbcBatchItemWriterBuilder<Adresse>()
+        .dataSource(ds)
+        .sql(
+            """
                         INSERT INTO adresse (
                             id, id_fantoir, numero, rep, nom_voie, code_postal, code_insee,
                             nom_commune, code_insee_ancienne_commune, nom_ancienne_commune,
@@ -68,20 +66,20 @@ public class WriterConfig {
                             source_nom_voie = excluded.source_nom_voie,
                             certification_commune = excluded.certification_commune,
                             cad_parcelles = excluded.cad_parcelles ;
-                       
-                        """) // :paramName -> getter du bean
-                .beanMapped()
-                .assertUpdates(true)
-                .build();
-    }
 
-    @Bean(name = "jdbcWriterDvf")
-    @Profile("postgres")
-    public JdbcBatchItemWriter<Dvf> jdbcPostgresWriterDvf(
-            DataSource ds) {
-        return new JdbcBatchItemWriterBuilder<Dvf>()
-                .dataSource(ds)
-                .sql("""   
+                        """) // :paramName -> getter du bean
+        .beanMapped()
+        .assertUpdates(true)
+        .build();
+  }
+
+  @Bean(name = "jdbcWriterDvf")
+  @Profile("postgres")
+  public JdbcBatchItemWriter<Dvf> jdbcPostgresWriterDvf(DataSource ds) {
+    return new JdbcBatchItemWriterBuilder<Dvf>()
+        .dataSource(ds)
+        .sql(
+            """
                         INSERT INTO dvf (
                             id_mutation, date_mutation, numero_disposition, nature_mutation, valeur_fonciere,
                             adresse_numero, adresse_suffixe, adresse_code_voie, adresse_nom_voie,
@@ -106,19 +104,18 @@ public class WriterConfig {
                             :surface_terrain, :longitude, :latitude
                         );
                         """) // :paramName -> getter du bean
-                .beanMapped()
-                .assertUpdates(true)
-                .build();
-    }
+        .beanMapped()
+        .assertUpdates(true)
+        .build();
+  }
 
-
-    @Bean(name = "jdbcWriter")
-    @Profile("sqlite")
-    public JdbcBatchItemWriter<Adresse> jdbcSqliteWriter(
-            DataSource ds) {
-        return new JdbcBatchItemWriterBuilder<Adresse>()
-                .dataSource(ds)
-                .sql("""   
+  @Bean(name = "jdbcWriter")
+  @Profile("sqlite")
+  public JdbcBatchItemWriter<Adresse> jdbcSqliteWriter(DataSource ds) {
+    return new JdbcBatchItemWriterBuilder<Adresse>()
+        .dataSource(ds)
+        .sql(
+            """
                         INSERT INTO adresse (
                             id, id_fantoir, numero, rep, nom_voie, code_postal, code_insee,
                             nom_commune, code_insee_ancienne_commune, nom_ancienne_commune,
@@ -153,11 +150,10 @@ public class WriterConfig {
                             source_nom_voie = excluded.source_nom_voie,
                             certification_commune = excluded.certification_commune,
                             cad_parcelles = excluded.cad_parcelles ;
-                       
-                        """) // :paramName -> getter du bean
-                .beanMapped()
-                .assertUpdates(true)
-                .build();
-    }
 
+                        """) // :paramName -> getter du bean
+        .beanMapped()
+        .assertUpdates(true)
+        .build();
+  }
 }

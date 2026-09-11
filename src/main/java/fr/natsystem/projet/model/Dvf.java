@@ -3,60 +3,44 @@ package fr.natsystem.projet.model;
 import java.time.LocalDate;
 
 public record Dvf(
-
-        String id_mutation,
-        LocalDate date_mutation,
-        int numero_disposition,
-        String nature_mutation,
-        double valeur_fonciere,
-
-        String adresse_numero,
-        String adresse_suffixe,
-        String adresse_code_voie,
-        String adresse_nom_voie,
-        String code_postal,
-        String code_commune,
-        String nom_commune,
-        String ancien_code_commune,
-        String ancien_nom_commune,
-        String code_departement,
-
-        String id_parcelle,
-        String ancien_id_parcelle,
-        String numero_volume,
-
-        String lot_1_numero,
-        double lot_1_surface_carrez,
-
-        String lot_2_numero,
-        double lot_2_surface_carrez,
-
-        String lot_3_numero,
-        double lot_3_surface_carrez,
-
-        String lot_4_numero,
-        double lot_4_surface_carrez,
-
-        String lot_5_numero,
-        double lot_5_surface_carrez,
-
-        int nombre_lots,
-
-        String code_type_local,
-        String type_local,
-
-        double surface_reelle_bati,
-        int nombre_pieces_principales,
-
-        String code_nature_culture,
-        String nature_culture,
-
-        String code_nature_culture_speciale,
-        String nature_culture_speciale,
-
-        double surface_terrain,
-
-        double longitude,
-        double latitude,
-        Long id
-) {}
+    String id_mutation,
+    LocalDate date_mutation,
+    int numero_disposition,
+    String nature_mutation,
+    double valeur_fonciere,
+    String adresse_numero,
+    String adresse_suffixe,
+    String adresse_code_voie,
+    String adresse_nom_voie,
+    String code_postal,
+    String code_commune,
+    String nom_commune,
+    String ancien_code_commune,
+    String ancien_nom_commune,
+    String code_departement,
+    String id_parcelle,
+    String ancien_id_parcelle,
+    String numero_volume,
+    String lot_1_numero,
+    double lot_1_surface_carrez,
+    String lot_2_numero,
+    double lot_2_surface_carrez,
+    String lot_3_numero,
+    double lot_3_surface_carrez,
+    String lot_4_numero,
+    double lot_4_surface_carrez,
+    String lot_5_numero,
+    double lot_5_surface_carrez,
+    int nombre_lots,
+    String code_type_local,
+    String type_local,
+    double surface_reelle_bati,
+    int nombre_pieces_principales,
+    String code_nature_culture,
+    String nature_culture,
+    String code_nature_culture_speciale,
+    String nature_culture_speciale,
+    double surface_terrain,
+    double longitude,
+    double latitude,
+    Long id) {}

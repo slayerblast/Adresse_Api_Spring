@@ -1,8 +1,10 @@
 package fr.natsystem.projet.services;
 
-
 import fr.natsystem.projet.batch.mapper.DvfRowMapper;
 import fr.natsystem.projet.model.Dvf;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -12,10 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @Slf4j
 @Service
 @Getter
@@ -23,34 +21,41 @@ import java.util.Map;
 @StepScope
 @RequiredArgsConstructor
 public class DvfCacheService {
-    private Map<Long, Dvf> cache = HashMap.newHashMap(10000);
-    @Value("#{stepExecutionContext['codeInsee']}")
-    private String codeInsee;
-    private final DvfRowMapper rowMapper;
-    private String currentCodeInsee;
-    private final JdbcTemplate jdbcTemplate;
+  private Map<Long, Dvf> cache = HashMap.newHashMap(10000);
 
-    public void load(String codeInsee) {
-        cache = HashMap.newHashMap(10000);
-        currentCodeInsee = codeInsee;
+  @Value("#{stepExecutionContext['codeInsee']}")
+  private String codeInsee;
 
-        // charger uniquement cette commune
-        List<Dvf> dvfs =
-                jdbcTemplate.query(
-                        """
+  private static final int TAILLE_TABLEAU = 10000;
+  private final DvfRowMapper rowMapper;
+  private String currentCodeInsee;
+  private final JdbcTemplate jdbcTemplate;
+
+  public void load(String codeInsee) {
+    cache = HashMap.newHashMap(TAILLE_TABLEAU);
+    currentCodeInsee = codeInsee;
+
+    // charger uniquement cette commune
+    List<Dvf> dvfs =
+        jdbcTemplate.query(
+            """
                         SELECT *
                         FROM dvf
                         WHERE code_commune = ?
                         """,
-                        rowMapper,
-                        codeInsee
-                );
+            rowMapper,
+            codeInsee);
 
-        for (Dvf dvf : dvfs) {
-            cache.put(dvf.id(), dvf);
-        }
+    for (Dvf dvf : dvfs) {
+      cache.put(dvf.id(), dvf);
     }
-    public Dvf get(Long dvfId) {return cache.get(dvfId);}
-    public void put(Long dvfId, Dvf dvf) {cache.put(dvfId, dvf);}
+  }
 
+  public Dvf get(Long dvfId) {
+    return cache.get(dvfId);
+  }
+
+  public void put(Long dvfId, Dvf dvf) {
+    cache.put(dvfId, dvf);
+  }
 }

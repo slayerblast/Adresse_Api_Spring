@@ -13,44 +13,40 @@ import org.springframework.stereotype.Component;
 @Profile("postgres")
 @Component
 @RequiredArgsConstructor
-public class CreateAdresseIndexPostgresTasklet implements CreateIndexInterface{
-    private final JdbcTemplate jdbcTemplate;
+public class CreateAdresseIndexPostgresTasklet implements CreateIndexInterface {
+  private final JdbcTemplate jdbcTemplate;
 
-
-    @Override
-    public RepeatStatus execute(
-            StepContribution contribution,
-            ChunkContext chunkContext) {
-        log.info("Create Adresse Index Postgres tasklet");
-        jdbcTemplate.batchUpdate(
-                """
+  @Override
+  public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
+    log.info("Create Adresse Index Postgres tasklet");
+    jdbcTemplate.batchUpdate(
+        """
                 CREATE INDEX IF NOT EXISTS idx_adresse_rue
                 ON adresse(LOWER(nom_voie) text_pattern_ops);
                 """,
-                """
+        """
                 CREATE INDEX IF NOT EXISTS idx_adresse_codePostal
                 ON adresse(code_postal text_pattern_ops);
                 """,
-                """
+        """
                 CREATE INDEX IF NOT EXISTS idx_adresse_commune
                 ON adresse(LOWER(nom_commune) text_pattern_ops);
                 """,
-                """
+        """
                 CREATE INDEX IF NOT EXISTS idx_adresse_search
                 ON adresse
                 USING gin (search_text gin_trgm_ops);
                 """,
-                """
+        """
                 UPDATE adresse
                 SET position = ST_SetSRID(ST_MakePoint(lon, lat), 4326)::geography;
                 """,
-                """
+        """
                 CREATE IF NOT EXISTS INDEX adresse_position_idx
                 ON adresse
                 USING GIST(position);
-                """
-        );
+                """);
 
-        return RepeatStatus.FINISHED;
-    }
+    return RepeatStatus.FINISHED;
+  }
 }

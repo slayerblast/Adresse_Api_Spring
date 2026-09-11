@@ -1,21 +1,19 @@
 package fr.natsystem.projet.services;
 
 import fr.natsystem.projet.batch.mapper.AdresseRowMapper;
-
 import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.model.AdresseKey;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Value;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -24,42 +22,42 @@ import java.util.Map;
 @StepScope
 @RequiredArgsConstructor
 public class AdresseCacheService {
-    private Map<AdresseKey, Adresse> cache = HashMap.newHashMap(10000);
+  private Map<AdresseKey, Adresse> cache = HashMap.newHashMap(10000);
 
-    @Value("#{stepExecutionContext['codeInsee']}")
-    private String codeInsee;
+  @Value("#{stepExecutionContext['codeInsee']}")
+  private String codeInsee;
 
-    private final AdresseRowMapper rowMapper;
-    private String currentCodeInsee;
-    private final JdbcTemplate jdbcTemplate;
+  private static final int TAILLE_TABLEAU = 10000;
+  private final AdresseRowMapper rowMapper;
+  private String currentCodeInsee;
+  private final JdbcTemplate jdbcTemplate;
 
-    public void load(String codeInsee) {
+  public void load(String codeInsee) {
 
-        cache = HashMap.newHashMap(10000);
-        currentCodeInsee = codeInsee;
+    cache = HashMap.newHashMap(TAILLE_TABLEAU);
+    currentCodeInsee = codeInsee;
 
-        // charger uniquement cette commune
-        List<Adresse> adresses =
-                jdbcTemplate.query(
-                        """
+    // charger uniquement cette commune
+    List<Adresse> adresses =
+        jdbcTemplate.query(
+            """
                         SELECT *
                         FROM adresse
                         WHERE code_insee = ?
                         """,
-                        rowMapper,
-                        codeInsee
-                );
+            rowMapper,
+            codeInsee);
 
-        for (Adresse adresse : adresses) {
-            cache.put(adresse.key(), adresse);
-        }
+    for (Adresse adresse : adresses) {
+      cache.put(adresse.key(), adresse);
     }
+  }
 
-    public Adresse get(AdresseKey key) {
-        return cache.get(key);
-    }
-    public void put(AdresseKey key, Adresse adresse) {
-        cache.put(key, adresse);
-    }
+  public Adresse get(AdresseKey key) {
+    return cache.get(key);
+  }
+
+  public void put(AdresseKey key, Adresse adresse) {
+    cache.put(key, adresse);
+  }
 }
-

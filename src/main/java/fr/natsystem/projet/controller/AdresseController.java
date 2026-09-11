@@ -2,7 +2,6 @@ package fr.natsystem.projet.controller;
 
 import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.model.ContourCommune;
-import fr.natsystem.projet.model.Dvf;
 import fr.natsystem.projet.model.TarifCommune;
 import fr.natsystem.projet.services.AdresseService;
 import fr.natsystem.projet.services.ContourCommuneService;
@@ -14,15 +13,14 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Tag(name = "Adresses", description = "Recherche dans le référentiel local BAN")
@@ -32,48 +30,47 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class AdresseController {
 
-    private final AdresseService service;
-    private final TarifCommuneService tarifCommuneService;
-    private final ContourCommuneService contourCommuneService;
+  private final AdresseService service;
+  private final TarifCommuneService tarifCommuneService;
+  private final ContourCommuneService contourCommuneService;
 
-    @GetMapping("/communes/{code_insee}/tarif")
-    public Optional<TarifCommune> getTarifCommune(
-            @PathVariable("code_insee") String codeInsee
-    ) {
-        return tarifCommuneService.findByCodeInsee(codeInsee);
-    }
+  @GetMapping("/communes/{code_insee}/tarif")
+  public Optional<TarifCommune> getTarifCommune(@PathVariable("code_insee") String codeInsee) {
+    return tarifCommuneService.findByCodeInsee(codeInsee);
+  }
 
-    @GetMapping("/communes/contour")
-    public List<ContourCommune> getContourCommune(){
-        return contourCommuneService.findAll();
-    }
+  @GetMapping("/communes/contour")
+  public List<ContourCommune> getContourCommune() {
+    return contourCommuneService.findAll();
+  }
 
-    @GetMapping("/proches")
-    public List<Adresse> trouverAdressesProches(
-            @RequestParam double lat,
-            @RequestParam double lon) {
+  @GetMapping("/proches")
+  public List<Adresse> trouverAdressesProches(@RequestParam double lat, @RequestParam double lon) {
 
-        return service.trouverAdressesProches(lat, lon);
-    }
+    return service.trouverAdressesProches(lat, lon);
+  }
 
-    @Operation(
-            summary = "Recherche d'adresses",
-            description = """
+  @Operation(
+      summary = "Recherche d'adresses",
+      description =
+          """
                     Recherche une ou plusieurs adresses selon
                     le code postal,
                     le nom de voie
                     et la commune.
                     Les critères sont combinables.
-                    """
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Liste paginée des adresses trouvées",
-            content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = Page.class),
-                    examples = @ExampleObject(
-                            value = """
+                    """)
+  @ApiResponse(
+      responseCode = "200",
+      description = "Liste paginée des adresses trouvées",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = Page.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          """
                                     {
                                       "content": [
                                         {
@@ -95,48 +92,44 @@ public class AdresseController {
                                       "totalPages": 3,
                                       "number": 0
                                     }
-                                    """
-                    )
-            )
-    )
-    @GetMapping
-    public Page<Adresse> rechercher(
-            @Parameter(description = "Code postal (ex : 75015)")
-            @RequestParam(required = false) String codePostal,
+                                    """)))
+  @GetMapping
+  public Page<Adresse> rechercher(
+      @Parameter(description = "Code postal (ex : 75015)") @RequestParam(required = false)
+          String codePostal,
+      @Parameter(description = "Nom de voie (ex : Rue du Docteur Finlay)")
+          @RequestParam(required = false)
+          String rue,
+      @Parameter(description = "Commune (ex : Paris)") @RequestParam(required = false)
+          String commune,
+      @PageableDefault(size = 20, page = 0) Pageable pageable) {
+    log.info("page={}", pageable.getPageNumber());
+    log.info("page={}", pageable.getPageSize());
+    log.info("offset={}", pageable.getOffset());
+    return service.rechercher(codePostal, rue, commune, pageable);
+  }
 
-            @Parameter(description = "Nom de voie (ex : Rue du Docteur Finlay)")
-            @RequestParam(required = false) String rue,
-
-            @Parameter(description = "Commune (ex : Paris)")
-            @RequestParam(required = false) String commune,
-
-            @PageableDefault(size = 20, page = 0)
-            Pageable pageable
-    ) {
-        log.info("page={}", pageable.getPageNumber());
-        log.info("page={}", pageable.getPageSize());
-        log.info("offset={}", pageable.getOffset());
-        return service.rechercher(codePostal, rue, commune, pageable);
-    }
-
-    @Operation(
-            summary = "Recherche d'adresses dynamique",
-            description = """
+  @Operation(
+      summary = "Recherche d'adresses dynamique",
+      description =
+          """
                     Recherche une ou plusieurs adresses selon
                     le code postal,
                     le nom de voie
                     et la commune.
                     et affiche le résultat en direct
-                    """
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Liste paginée des adresses trouvées",
-            content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = Page.class),
-                    examples = @ExampleObject(
-                            value = """
+                    """)
+  @ApiResponse(
+      responseCode = "200",
+      description = "Liste paginée des adresses trouvées",
+      content =
+          @Content(
+              mediaType = "application/json",
+              schema = @Schema(implementation = Page.class),
+              examples =
+                  @ExampleObject(
+                      value =
+                          """
                                     {
                                       "content": [
                                         {
@@ -158,15 +151,13 @@ public class AdresseController {
                                       "totalPages": 1,
                                       "number": 0
                                     }
-                                    """
-                    )
-            )
-    )
-    @GetMapping("/autocomplete")
-    public List<Adresse> autoComplete(
-            @Parameter(description = "Nom d'une adresse (ex : 19 rue du Docteur Finlay 75015 Paris )")
-            @RequestParam String q) {
+                                    """)))
+  @GetMapping("/autocomplete")
+  public List<Adresse> autoComplete(
+      @Parameter(description = "Nom d'une adresse (ex : 19 rue du Docteur Finlay 75015 Paris )")
+          @RequestParam
+          String q) {
 
-        return service.autoComplete(q);
-    }
+    return service.autoComplete(q);
+  }
 }

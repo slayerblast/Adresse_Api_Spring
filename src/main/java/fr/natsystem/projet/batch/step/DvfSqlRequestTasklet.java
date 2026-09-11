@@ -14,11 +14,12 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class DvfSqlRequestTasklet implements Tasklet {
-    private final JdbcTemplate jdbcTemplate;
+  private final JdbcTemplate jdbcTemplate;
 
-    @Override
-    public @Nullable RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-        jdbcTemplate.update(
+  @Override
+  public @Nullable RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext)
+      throws Exception {
+    jdbcTemplate.update(
         """
                 WITH parametres AS (
                            /*
@@ -519,17 +520,16 @@ public class DvfSqlRequestTasklet implements Tasklet {
 
                            date_calcul =
                                EXCLUDED.date_calcul;
-                """
-        );
-        jdbcTemplate.update(
-                """
+                """);
+    jdbcTemplate.update(
+        """
                         TRUNCATE TABLE dvf_Staging;
-                        """
-        );
+                        """);
 
-        jdbcTemplate.execute("""
+    jdbcTemplate.execute(
+        """
                 DROP INDEX IF EXISTS idx_staging_dvf_paging;
                 """);
-        return RepeatStatus.FINISHED;
-    }
+    return RepeatStatus.FINISHED;
+  }
 }

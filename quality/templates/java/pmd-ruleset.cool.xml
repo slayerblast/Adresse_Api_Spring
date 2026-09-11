@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="cool"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+    <description>
+        COOL mode: "import et choses idiotes" (equivalent local SonarLint) - imports
+        inutilises/dupliques, code mort evident, blocs vides. Volontairement restreint
+        (pas de regles de style/complexite/design) pour rester actionnable sans bruit.
+        Compatible PMD 7. See quality/templates/java/README.md.
+    </description>
+
+    <!-- Imports : couvre unused, duplicate, same package et java.lang -->
+    <rule ref="category/java/codestyle.xml/UnnecessaryImport" />
+
+    <!-- Code mort evident -->
+    <rule ref="category/java/bestpractices.xml/UnusedLocalVariable" />
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateField" />
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod" />
+
+    <!-- Blocs vides et flux de controle -->
+    <rule ref="category/java/codestyle.xml/EmptyControlStatement" />
+    <rule ref="category/java/errorprone.xml/EmptyCatchBlock">
+        <properties>
+            <property name="allowCommentedBlocks" value="true" />
+            <property name="allowExceptionNameRegex" value="^(ignored|expected)$" />
+        </properties>
+    </rule>
+
+    <!-- Erreurs evidentes sans debat stylistique -->
+    <rule ref="category/java/errorprone.xml/BrokenNullCheck" />
+    <rule ref="category/java/errorprone.xml/UnconditionalIfStatement" />
+    <rule ref="category/java/codestyle.xml/UnnecessarySemicolon" />
+</ruleset>
