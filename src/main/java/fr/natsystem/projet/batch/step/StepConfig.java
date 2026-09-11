@@ -3,7 +3,6 @@ package fr.natsystem.projet.batch.step;
 import fr.natsystem.projet.batch.Partitioner.CodeInseePartitioner;
 import fr.natsystem.projet.batch.Partitioner.DvfPartitioner;
 import fr.natsystem.projet.batch.listener.AdresseSkipListener;
-import fr.natsystem.projet.batch.listener.DvfSkipListener;
 import fr.natsystem.projet.batch.listener.NestedJobStepListener;
 import fr.natsystem.projet.batch.listener.StepProgressListener;
 import fr.natsystem.projet.batch.writer.AdresseDedupWriter;
@@ -60,9 +59,7 @@ public class StepConfig {
       @Qualifier("jdbcWriter") JdbcBatchItemWriter<Adresse> jdbcWriter,
       AdresseDedupWriter aDedupWriter,
       CompositeItemProcessor<Adresse, Adresse> compositeCsvProcessor,
-      StepProgressListener listener,
-      AdresseSkipListener skipListener,
-      ChunkListener metricChunkListener) {
+      AdresseStepListeners listeners) {
     return new StepBuilder("importAdresseStep", repo)
         .<Adresse, Adresse>chunk(pgchunk)
         .transactionManager(tx)
@@ -72,9 +69,7 @@ public class StepConfig {
         .faultTolerant()
         .skip(ValidationException.class)
         .skipLimit(Integer.MAX_VALUE)
-        .listener(listener)
-        .listener(skipListener)
-        .listener(metricChunkListener)
+        .listener(listeners)
         .build();
   }
 
@@ -85,9 +80,7 @@ public class StepConfig {
       JdbcPagingItemReader<Dvf> stagingReaderDvf,
       @Qualifier("jdbcWriterDvf") JdbcBatchItemWriter<Dvf> jdbcWriter,
       ValidatingItemProcessor<Dvf> validatingProcessorDvf,
-      StepProgressListener listener,
-      DvfSkipListener skipListener,
-      ChunkListener metricChunkListener) {
+      AdresseStepListeners listeners) {
     return new StepBuilder("importDvfStep", repo)
         .<Dvf, Dvf>chunk(pgchunk)
         .transactionManager(tx)
@@ -97,9 +90,7 @@ public class StepConfig {
         .faultTolerant()
         .skip(ValidationException.class)
         .skipLimit(Integer.MAX_VALUE)
-        .listener(listener)
-        .listener(skipListener)
-        .listener(metricChunkListener)
+        .listener(listeners)
         .build();
   }
 
@@ -236,4 +227,18 @@ public class StepConfig {
         .parametersExtractor(new ChecksumExtractor())
         .build();
   }
+
+  @Bean
+  public AdresseStepListeners adresseStepListeners(
+      StepProgressListener progressListener,
+      AdresseSkipListener skipListener,
+      ChunkListener metricChunkListener) {
+
+    return new AdresseStepListeners(progressListener, skipListener, metricChunkListener);
+  }
+
+  public record AdresseStepListeners(
+      StepProgressListener progressListener,
+      AdresseSkipListener skipListener,
+      ChunkListener metricChunkListener) {}
 }

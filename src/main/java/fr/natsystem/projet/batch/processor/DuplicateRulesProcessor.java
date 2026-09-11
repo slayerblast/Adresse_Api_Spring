@@ -26,6 +26,7 @@ public class DuplicateRulesProcessor implements ItemProcessor<Adresse, Adresse> 
   public @Nullable Adresse process(Adresse item) {
 
     long start = System.nanoTime();
+    Adresse result = item;
 
     try {
 
@@ -40,7 +41,7 @@ public class DuplicateRulesProcessor implements ItemProcessor<Adresse, Adresse> 
 
         bilanJobListener.getDoublonPur().incrementAndGet();
 
-        item = null;
+        result = null;
 
       } else if (item.isBetterThan(existing)) {
 
@@ -48,11 +49,12 @@ public class DuplicateRulesProcessor implements ItemProcessor<Adresse, Adresse> 
         bilanJobListener.getDoublon().incrementAndGet();
 
       } else {
+
         bilanJobListener.getDoublon().incrementAndGet();
-        item = null;
+        result = null;
       }
 
-      return item;
+      return result;
 
     } finally {
 

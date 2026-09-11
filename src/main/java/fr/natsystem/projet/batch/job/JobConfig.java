@@ -8,7 +8,9 @@ import fr.natsystem.projet.batch.listener.CheckFileListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.EnableJdbcJobRepository;
 import org.springframework.batch.core.job.Job;
+import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.Step;
 import org.springframework.context.annotation.Bean;
@@ -26,21 +28,18 @@ public class JobConfig {
   @Bean
   public Job importAdresseJob(
       JobRepository jobRepository,
-      Step masterStepAdresse,
+      Flow importFlow,
       BilanJobListener listener,
-      Step createStagingIndexStep,
       Step suppressionObsoleteStep,
       Step createAdresseIndexStep,
-      Step csvToStagingStep,
       Step checksumStep) {
     return new JobBuilder("importAdresseJob", jobRepository)
         .listener(listener)
-        .start(csvToStagingStep)
-        .next(createStagingIndexStep)
-        .next(masterStepAdresse)
+        .start(importFlow)
         .next(suppressionObsoleteStep)
         .next(createAdresseIndexStep)
         .next(checksumStep)
+        .end()
         .build();
   }
 
@@ -68,59 +67,78 @@ public class JobConfig {
       JobRepository jobRepository,
       FileCountDecider fileCountDecider,
       CheckArgDecider checkArgDecider,
-      InnerJobDecider innerJobDecider,
       CheckFileListener listener,
-      Step dvfJobStep,
       Step downloadStep,
-      Step adresseJobStep) {
-    final String NO_INPUT_FILE = "NO_INPUT_FILE";
-    final String OK_ARG_NOT_EMPTY = "OK_ARG_NOT_EMPTY";
-    final String MULTIPLE_FILES_FOUND = "MULTIPLE_FILES_FOUND";
-    final String OK_FOR_RETRIEVE = "OK_FOR_RETRIEVE";
-    final String OK_FOR_IMPORT = "OK_FOR_IMPORT";
+      Flow importInnerFlow) {
+
+    final String noInputFile = "NO_INPUT_FILE";
+    final String okArgNotEmpty = "OK_ARG_NOT_EMPTY";
+    final String multipleFilesFound = "MULTIPLE_FILES_FOUND";
+    final String okForRetrieve = "OK_FOR_RETRIEVE";
+    final String okForImport = "OK_FOR_IMPORT";
+    final String okFileExist = "OK_FILE_EXIST";
+    final String ready = "READY";
 
     return new JobBuilder("checkFileJob", jobRepository)
         .start(fileCountDecider)
-        .on(OK_ARG_NOT_EMPTY)
+        .on(okArgNotEmpty)
         .to(checkArgDecider)
         .from(fileCountDecider)
-        .on(MULTIPLE_FILES_FOUND)
+        .on(multipleFilesFound)
         .fail()
         .from(fileCountDecider)
-        .on(NO_INPUT_FILE)
+        .on(noInputFile)
         .end()
         .from(fileCountDecider)
-        .on(OK_FOR_RETRIEVE)
+        .on(okForRetrieve)
         .to(downloadStep)
         .from(fileCountDecider)
-        .on(OK_FOR_IMPORT)
-        .to(innerJobDecider)
+        .on(okForImport)
+        .to(importInnerFlow)
         .from(checkArgDecider)
-        .on(NO_INPUT_FILE)
+        .on(noInputFile)
         .end()
         .from(checkArgDecider)
-        .on(MULTIPLE_FILES_FOUND)
+        .on(multipleFilesFound)
         .fail()
         .from(checkArgDecider)
-        .on(OK_FOR_RETRIEVE)
+        .on(okForRetrieve)
         .to(downloadStep)
         .from(checkArgDecider)
-        .on("OK_FILE_EXIST")
-        .to(innerJobDecider)
+        .on(okFileExist)
+        .to(importInnerFlow)
         .from(downloadStep)
-        .on(NO_INPUT_FILE)
+        .on(noInputFile)
         .end()
         .from(downloadStep)
-        .on("READY")
-        .to(innerJobDecider)
-        .from(innerJobDecider)
+        .on(ready)
+        .to(importInnerFlow)
+        .end()
+        .listener(listener)
+        .build();
+  }
+
+  @Bean
+  public Flow importFlow(
+      Step createAdresseIndexStep, Step csvToStagingStep, Step masterStepAdresse) {
+    return new FlowBuilder<Flow>("importFlow")
+        .start(csvToStagingStep)
+        .next(createAdresseIndexStep)
+        .next(masterStepAdresse)
+        .build();
+  }
+
+  @Bean
+  public Flow importInnerFlow(
+      InnerJobDecider innerJobDecider, Step dvfJobStep, Step adresseJobStep) {
+
+    return new FlowBuilder<Flow>("importInnerFlow")
+        .start(innerJobDecider)
         .on("importAdresseJob")
         .to(adresseJobStep)
         .from(innerJobDecider)
         .on("importDvfJob")
         .to(dvfJobStep)
-        .end()
-        .listener(listener)
-        .build();
+        .end();
   }
 }

@@ -14,6 +14,7 @@ import fr.natsystem.projet.repository.TarifCommuneRepository;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -70,19 +71,13 @@ class TarifCommuneRepositoryTest {
     Long nombreTransactionsN1 = TRANSACTION_COUNT_N1;
 
     BigDecimal variationPrixMoyen = new BigDecimal("4.65");
-
     BigDecimal variationPrixMedian = new BigDecimal("5.00");
-
     BigDecimal variationPrixM2 = new BigDecimal("4.84");
-
     BigDecimal variationNombreTransactions = new BigDecimal("13.64");
 
-    LocalDate dateDebutPeriodeN = LocalDate.of(YEAR_N, 1, 1);
-
+    LocalDate dateDebutPeriodeN = LocalDate.of(YEAR_N1, Month.JANUARY, 1);
     LocalDate dateFinPeriodeN = LocalDate.of(YEAR_N, END_MONTH, END_DAY);
-
-    LocalDate dateDebutPeriodeN1 = LocalDate.of(YEAR_N1, 1, 1);
-
+    LocalDate dateDebutPeriodeN1 = LocalDate.of(YEAR_N1, Month.JANUARY, 1);
     LocalDate dateFinPeriodeN1 = LocalDate.of(YEAR_N1, END_MONTH, END_DAY);
 
     OffsetDateTime dateCalcul =
@@ -96,24 +91,12 @@ class TarifCommuneRepositoryTest {
             0,
             ZoneOffset.UTC);
 
-    configureResultSet(
-        prixMoyen,
-        prixMedian,
-        prixM2,
-        nombreTransactions,
-        prixMoyenN1,
-        prixMedianN1,
-        prixM2N1,
-        nombreTransactionsN1,
-        variationPrixMoyen,
-        variationPrixMedian,
-        variationPrixM2,
-        variationNombreTransactions,
-        dateDebutPeriodeN,
-        dateFinPeriodeN,
-        dateDebutPeriodeN1,
-        dateFinPeriodeN1,
-        dateCalcul);
+    configurePriceValues(prixMoyen, prixMedian, prixM2, nombreTransactions);
+    configurePreviousYearValues(prixMoyenN1, prixMedianN1, prixM2N1, nombreTransactionsN1);
+    configureVariationValues(
+        variationPrixMoyen, variationPrixMedian, variationPrixM2, variationNombreTransactions);
+    configureDateValues(
+        dateDebutPeriodeN, dateFinPeriodeN, dateDebutPeriodeN1, dateFinPeriodeN1, dateCalcul);
 
     when(jdbcTemplate.query(anyString(), any(RowMapper.class), eq(CODE_INSEE)))
         .thenAnswer(
@@ -198,44 +181,38 @@ class TarifCommuneRepositoryTest {
     verify(jdbcTemplate).query(anyString(), any(RowMapper.class), eq(CODE_INSEE));
   }
 
-  private void configureResultSet(
-      BigDecimal prixMoyen,
-      BigDecimal prixMedian,
-      BigDecimal prixM2,
-      Long nombreTransactions,
-      BigDecimal prixMoyenN1,
-      BigDecimal prixMedianN1,
-      BigDecimal prixM2N1,
-      Long nombreTransactionsN1,
-      BigDecimal variationPrixMoyen,
-      BigDecimal variationPrixMedian,
-      BigDecimal variationPrixM2,
-      BigDecimal variationNombreTransactions,
-      LocalDate dateDebutPeriodeN,
-      LocalDate dateFinPeriodeN,
-      LocalDate dateDebutPeriodeN1,
-      LocalDate dateFinPeriodeN1,
-      OffsetDateTime dateCalcul)
+  private void configurePriceValues(
+      BigDecimal prixMoyen, BigDecimal prixMedian, BigDecimal prixM2, Long nombreTransactions)
       throws Exception {
 
     when(resultSet.getString("code_insee")).thenReturn(CODE_INSEE);
 
     when(resultSet.getBigDecimal("prix_moyen")).thenReturn(prixMoyen);
-
     when(resultSet.getBigDecimal("prix_median")).thenReturn(prixMedian);
-
     when(resultSet.getBigDecimal("prix_m2")).thenReturn(prixM2);
-
     when(resultSet.getObject("nombre_transactions", Long.class)).thenReturn(nombreTransactions);
+  }
+
+  private void configurePreviousYearValues(
+      BigDecimal prixMoyenN1,
+      BigDecimal prixMedianN1,
+      BigDecimal prixM2N1,
+      Long nombreTransactionsN1)
+      throws Exception {
 
     when(resultSet.getBigDecimal("prix_moyen_n_1")).thenReturn(prixMoyenN1);
-
     when(resultSet.getBigDecimal("prix_median_n_1")).thenReturn(prixMedianN1);
-
     when(resultSet.getBigDecimal("prix_m2_n_1")).thenReturn(prixM2N1);
-
     when(resultSet.getObject("nombre_transactions_n_1", Long.class))
         .thenReturn(nombreTransactionsN1);
+  }
+
+  private void configureVariationValues(
+      BigDecimal variationPrixMoyen,
+      BigDecimal variationPrixMedian,
+      BigDecimal variationPrixM2,
+      BigDecimal variationNombreTransactions)
+      throws Exception {
 
     when(resultSet.getBigDecimal("variation_prix_moyen_pct")).thenReturn(variationPrixMoyen);
 
@@ -245,6 +222,15 @@ class TarifCommuneRepositoryTest {
 
     when(resultSet.getBigDecimal("variation_nombre_transactions_pct"))
         .thenReturn(variationNombreTransactions);
+  }
+
+  private void configureDateValues(
+      LocalDate dateDebutPeriodeN,
+      LocalDate dateFinPeriodeN,
+      LocalDate dateDebutPeriodeN1,
+      LocalDate dateFinPeriodeN1,
+      OffsetDateTime dateCalcul)
+      throws Exception {
 
     when(resultSet.getObject("date_debut_periode_n", LocalDate.class))
         .thenReturn(dateDebutPeriodeN);
@@ -275,21 +261,14 @@ class TarifCommuneRepositoryTest {
     verify(resultSet).getObject("nombre_transactions_n_1", Long.class);
 
     verify(resultSet).getBigDecimal("variation_prix_moyen_pct");
-
     verify(resultSet).getBigDecimal("variation_prix_median_pct");
-
     verify(resultSet).getBigDecimal("variation_prix_m2_pct");
-
     verify(resultSet).getBigDecimal("variation_nombre_transactions_pct");
 
     verify(resultSet).getObject("date_debut_periode_n", LocalDate.class);
-
     verify(resultSet).getObject("date_fin_periode_n", LocalDate.class);
-
     verify(resultSet).getObject("date_debut_periode_n_1", LocalDate.class);
-
     verify(resultSet).getObject("date_fin_periode_n_1", LocalDate.class);
-
     verify(resultSet).getObject("date_calcul", OffsetDateTime.class);
   }
 
@@ -308,9 +287,9 @@ class TarifCommuneRepositoryTest {
         BigDecimal.ZERO,
         BigDecimal.ZERO,
         BigDecimal.ZERO,
-        LocalDate.of(YEAR_N, 1, 1),
+        LocalDate.of(YEAR_N, Month.JANUARY, 1),
         LocalDate.of(YEAR_N, END_MONTH, END_DAY),
-        LocalDate.of(YEAR_N1, 1, 1),
+            LocalDate.of(YEAR_N1, Month.JANUARY, 1),
         LocalDate.of(YEAR_N1, END_MONTH, END_DAY),
         OffsetDateTime.of(
             CALCULATION_YEAR,

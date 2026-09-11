@@ -46,12 +46,17 @@ public class StepProgressListener implements StepExecutionListener {
   }
 
   private boolean containsCause(Throwable cause, Class<? extends Throwable> cls) {
-    while (cause != null) {
-      if (cls.isInstance(cause)) {
+
+    Throwable currentCause = cause;
+
+    while (currentCause != null) {
+      if (cls.isInstance(currentCause)) {
         return true;
       }
-      cause = cause.getCause();
+
+      currentCause = currentCause.getCause();
     }
+
     return false;
   }
 }

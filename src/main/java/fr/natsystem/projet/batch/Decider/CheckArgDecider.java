@@ -22,6 +22,8 @@ public class CheckArgDecider implements JobExecutionDecider {
   @Value("${spring.batch.pathFile}")
   private String pathFile;
 
+  private static final int SINGLE_FILE_COUNT = 1;
+
   @Override
   public FlowExecutionStatus decide(
       JobExecution jobExecution, @Nullable StepExecution stepExecution) {
@@ -44,14 +46,14 @@ public class CheckArgDecider implements JobExecutionDecider {
           new FlowExecutionStatus(
               "OK_FILE_EXIST"); // le fichier existe et correspond à la valeur de l'argument
       File[] files = folder.listFiles(File::isFile);
-      String checkSum = null;
+      String checkSum;
       try {
         checkSum = ChecksumUtils.sha256(files[0].getAbsolutePath());
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
       jobExecution.getExecutionContext().putString("checksum", checkSum);
-    } else if (count > 1) {
+    } else if (count > SINGLE_FILE_COUNT) {
       result =
           new FlowExecutionStatus(
               "MULTIPLE_FILES_FOUND"); // il y a au moins deux fichiers dans le dossier et aucune ne
@@ -61,7 +63,7 @@ public class CheckArgDecider implements JobExecutionDecider {
           new FlowExecutionStatus(
               "NO_INPUT_FILE"); //  il y a 1 fichier ou 0 et le paramètre de récuperation est
       // désactivé
-    } else if (count == 1) {
+    } else if (count == SINGLE_FILE_COUNT) {
       result =
           new FlowExecutionStatus(
               "MULTIPLE_FILES_FOUND"); // il y a un fichier et le paramètre de récupération est
