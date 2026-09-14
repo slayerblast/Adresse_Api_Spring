@@ -289,7 +289,7 @@ class TarifCommuneRepositoryTest {
         BigDecimal.ZERO,
         LocalDate.of(YEAR_N, Month.JANUARY, 1),
         LocalDate.of(YEAR_N, END_MONTH, END_DAY),
-            LocalDate.of(YEAR_N1, Month.JANUARY, 1),
+        LocalDate.of(YEAR_N1, Month.JANUARY, 1),
         LocalDate.of(YEAR_N1, END_MONTH, END_DAY),
         OffsetDateTime.of(
             CALCULATION_YEAR,
