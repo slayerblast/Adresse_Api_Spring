@@ -4,6 +4,7 @@ cmd -> mvn clean install
 @Deprecier -> si lancé avec intellij -> mettre en argument le chemin du csv exemple : src/main/resources/adresses-79-2026-06-22.csv
 Maintenant l'argument correspondant au chemin du fichier doit être entrée dans swagger quand on veut lancer un batch
 NE PAS OUBLIER AUSSI DE SUPPRIMER LE .gitkeep dans \data\csvFile
+Veuillez créer une database avec le nom "adresse"
 Lien api : http://localhost:8080/swagger-ui/index.html#
 lien web : http://localhost:4200/
 
