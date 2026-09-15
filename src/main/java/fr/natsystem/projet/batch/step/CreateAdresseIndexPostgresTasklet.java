@@ -36,12 +36,14 @@ public class CreateAdresseIndexPostgresTasklet implements CreateIndexInterface {
                 CREATE INDEX IF NOT EXISTS idx_adresse_search
                 ON adresse
                 USING GIN(search_text gin_trgm_ops);
-                """,
+                """
+            /*,
         """
                 CREATE INDEX IF NOT EXISTS  adresse_position_idx
                 ON adresse
                 USING GIST(position);
-                """);
+                """*/
+    );
 
     return RepeatStatus.FINISHED;
   }
