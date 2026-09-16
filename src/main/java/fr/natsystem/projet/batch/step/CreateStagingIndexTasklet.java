@@ -18,47 +18,47 @@ public class CreateStagingIndexTasklet implements Tasklet {
   public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
     String innerJob =
         contribution.getStepExecution().getJobExecution().getJobParameters().getString("innerJob");
-    if (innerJob != null) {
-      if (innerJob.equals("importAdresseJob")) {
-        jdbcTemplate.batchUpdate(
-            """
-                        CREATE INDEX IF NOT EXISTS idx_adresse_code_insee
-                        ON adresse(code_insee)
-                        """,
-            """
-                        CREATE INDEX IF NOT EXISTS idx_staging_paging
-                        ON adresse_staging(code_insee, id)
-                        """,
-            """
-                        CREATE INDEX IF NOT EXISTS idx_staging_key
-                        ON adresse_staging(id, type_position, x, y)
-                        """);
-      } else if (innerJob.equals("importDvfJob")) {
-        jdbcTemplate.batchUpdate(
-            """
-                        CREATE INDEX IF NOT EXISTS idx_dvf_code_commune
-                        ON dvf(code_commune)
-                        """,
-            """
-                        CREATE INDEX IF NOT EXISTS idx_staging_dvf_paging
-                        ON dvf_staging(code_commune, id)
-                        """);
-      } else {
-        jdbcTemplate.batchUpdate(
-            """
-                        CREATE INDEX IF NOT EXISTS idx_adresse_code_insee
-                        ON adresse(code_insee)
-                        """,
-            """
-                        CREATE INDEX IF NOT EXISTS idx_staging_paging
-                        ON adresse_staging(code_insee, id)
-                        """,
-            """
-                        CREATE INDEX IF NOT EXISTS idx_staging_key
-                        ON adresse_staging(id, type_position, x, y)
-                        """);
+
+      if ("importDvfJob".equals(innerJob)) {
+
+          jdbcTemplate.execute("""
+            CREATE INDEX IF NOT EXISTS idx_dvf_code_commune
+            ON dvf(code_commune)
+            """);
+
+          jdbcTemplate.execute("""
+            CREATE INDEX IF NOT EXISTS idx_staging_dvf_paging
+            ON dvf_staging(code_commune, id)
+            """);
+
+
+      } else if (innerJob != null) {
+
+          jdbcTemplate.execute("""
+            CREATE INDEX IF NOT EXISTS idx_adresse_code_insee
+            ON adresse(code_insee)
+            """);
+
+          jdbcTemplate.execute("""
+            CREATE INDEX IF NOT EXISTS idx_staging_paging
+            ON adresse_staging(code_insee, id)
+            """);
+
+          jdbcTemplate.execute("""
+            CREATE INDEX IF NOT EXISTS idx_staging_key
+            ON adresse_staging(id, type_position, x, y)
+            """);
       }
-    }
+        jdbcTemplate.batchUpdate("""
+                ALTER TABLE adresse
+                ADD COLUMN IF NOT EXISTS position geometry(Point, 4326)
+                GENERATED ALWAYS AS (
+                    ST_SetSRID(
+                        ST_MakePoint(lon, lat),
+                        4326
+                    )
+                ) STORED;
+                """);
 
     return RepeatStatus.FINISHED;
   }

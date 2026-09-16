@@ -26,13 +26,7 @@ CREATE TABLE IF NOT EXISTS adresse (
                                        certification_commune INTEGER,
                                        cad_parcelles TEXT,
                                        search_text text,
-                                       position geometry(Point, 4326)
-                                           GENERATED ALWAYS AS (
-                                               ST_SetSRID(
-                                                   ST_MakePoint(lon, lat),
-                                                   4326
-                                               )
-                                           ) STORED,
+
                                        CONSTRAINT uk_adresse UNIQUE (id, type_position, x, y)
     );
 
