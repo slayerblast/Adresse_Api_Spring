@@ -33,7 +33,6 @@ public class AdresseCacheService {
   private final JdbcTemplate jdbcTemplate;
 
   public void load(String codeInsee) {
-
     cache = HashMap.newHashMap(TAILLE_TABLEAU);
     currentCodeInsee = codeInsee;
 
@@ -46,11 +45,12 @@ public class AdresseCacheService {
                         WHERE code_insee = ?
                         """,
             rowMapper,
-            codeInsee);
+                currentCodeInsee);
 
     for (Adresse adresse : adresses) {
       cache.put(adresse.key(), adresse);
     }
+      log.info("Cache chargé : {} adresses", cache.size());
   }
 
   public Adresse get(AdresseKey key) {

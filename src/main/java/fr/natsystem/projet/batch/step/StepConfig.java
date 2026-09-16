@@ -4,6 +4,7 @@ import fr.natsystem.projet.batch.Partitioner.CodeInseePartitioner;
 import fr.natsystem.projet.batch.Partitioner.DvfPartitioner;
 import fr.natsystem.projet.batch.listener.AdresseSkipListener;
 import fr.natsystem.projet.batch.listener.NestedJobStepListener;
+import fr.natsystem.projet.batch.listener.StepListeners;
 import fr.natsystem.projet.batch.listener.StepProgressListener;
 import fr.natsystem.projet.batch.writer.AdresseDedupWriter;
 import fr.natsystem.projet.model.Adresse;
@@ -59,7 +60,7 @@ public class StepConfig {
       @Qualifier("jdbcWriter") JdbcBatchItemWriter<Adresse> jdbcWriter,
       AdresseDedupWriter aDedupWriter,
       CompositeItemProcessor<Adresse, Adresse> compositeCsvProcessor,
-      AdresseStepListeners listeners) {
+      StepListeners stepListeners) {
     return new StepBuilder("importAdresseStep", repo)
         .<Adresse, Adresse>chunk(pgchunk)
         .transactionManager(tx)
@@ -69,7 +70,7 @@ public class StepConfig {
         .faultTolerant()
         .skip(ValidationException.class)
         .skipLimit(Integer.MAX_VALUE)
-        .listener(listeners)
+        .listener(stepListeners)
         .build();
   }
 
@@ -80,7 +81,7 @@ public class StepConfig {
       JdbcPagingItemReader<Dvf> stagingReaderDvf,
       @Qualifier("jdbcWriterDvf") JdbcBatchItemWriter<Dvf> jdbcWriter,
       ValidatingItemProcessor<Dvf> validatingProcessorDvf,
-      AdresseStepListeners listeners) {
+      StepListeners stepListeners) {
     return new StepBuilder("importDvfStep", repo)
         .<Dvf, Dvf>chunk(pgchunk)
         .transactionManager(tx)
@@ -90,7 +91,7 @@ public class StepConfig {
         .faultTolerant()
         .skip(ValidationException.class)
         .skipLimit(Integer.MAX_VALUE)
-        .listener(listeners)
+        .listener(stepListeners)
         .build();
   }
 
@@ -227,18 +228,18 @@ public class StepConfig {
         .parametersExtractor(new ChecksumExtractor())
         .build();
   }
+    @Bean
+    public StepListeners stepListeners(
+            StepProgressListener progressListener,
+            AdresseSkipListener skipListener,
+            ChunkListener metricChunkListener,
+            NestedJobStepListener nestedJobStepListener) {
 
-  @Bean
-  public AdresseStepListeners adresseStepListeners(
-      StepProgressListener progressListener,
-      AdresseSkipListener skipListener,
-      ChunkListener metricChunkListener) {
+        return new StepListeners(
+                progressListener,
+                skipListener,
+                metricChunkListener,
+                nestedJobStepListener);
+    }
 
-    return new AdresseStepListeners(progressListener, skipListener, metricChunkListener);
-  }
-
-  public record AdresseStepListeners(
-      StepProgressListener progressListener,
-      AdresseSkipListener skipListener,
-      ChunkListener metricChunkListener) {}
 }
