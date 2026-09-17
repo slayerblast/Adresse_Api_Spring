@@ -112,18 +112,13 @@ public class AdresseRepositoryPostgres implements AdresseRepository {
     String sql =
         """
                 SELECT *,
-                       ST_Distance(
-                           ST_Transform(position, 3857),
-                           ST_Transform(ST_SetSRID(ST_MakePoint(?, ?), 4326), 3857)
-                       ) AS distance
-                FROM adresse
-                WHERE ST_DWithin(
-                    ST_Transform(position, 3857),
-                    ST_Transform(ST_SetSRID(ST_MakePoint(?, ?), 4326), 3857),
-                    250
-                )
-                ORDER BY distance
-                LIMIT 1;
+                               ST_Distance(
+                                   position,
+                                   ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                               ) AS distance
+                        FROM adresse
+                        ORDER BY position <-> ST_SetSRID(ST_MakePoint(?, ?), 4326)
+                        LIMIT 1;
         """;
 
     return jdbcTemplate.query(sql, adresseRowMapper, lon, lat, lon, lat);

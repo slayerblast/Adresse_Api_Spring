@@ -22,9 +22,12 @@ public class ChecksumExtractor implements JobParametersExtractor {
     log.info("checksum dans le getJobParameters = {}", checksum);
     return new JobParametersBuilder()
         .addString("checksum", checksum, true)
-        .addString("lastExitStatus", exitStatus,false )
+        .addString("lastExitStatus", exitStatus, false)
         .addLong("jobExecutionId", stepExecution.getJobExecution().getId(), false)
-        .addString("innerJob", stepExecution.getJobExecution().getJobParameters().getString("innerJob"), false)
+        .addString(
+            "innerJob",
+            stepExecution.getJobExecution().getJobParameters().getString("innerJob"),
+            false)
         .toJobParameters();
   }
 }

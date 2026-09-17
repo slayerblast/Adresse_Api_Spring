@@ -45,12 +45,12 @@ public class AdresseCacheService {
                         WHERE code_insee = ?
                         """,
             rowMapper,
-                currentCodeInsee);
+            currentCodeInsee);
 
     for (Adresse adresse : adresses) {
       cache.put(adresse.key(), adresse);
     }
-      log.info("Cache chargé : {} adresses", cache.size());
+    log.info("Cache chargé : {} adresses", cache.size());
   }
 
   public Adresse get(AdresseKey key) {

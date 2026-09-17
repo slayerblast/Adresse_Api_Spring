@@ -228,18 +228,15 @@ public class StepConfig {
         .parametersExtractor(new ChecksumExtractor())
         .build();
   }
-    @Bean
-    public StepListeners stepListeners(
-            StepProgressListener progressListener,
-            AdresseSkipListener skipListener,
-            ChunkListener metricChunkListener,
-            NestedJobStepListener nestedJobStepListener) {
 
-        return new StepListeners(
-                progressListener,
-                skipListener,
-                metricChunkListener,
-                nestedJobStepListener);
-    }
+  @Bean
+  public StepListeners stepListeners(
+      StepProgressListener progressListener,
+      AdresseSkipListener skipListener,
+      ChunkListener metricChunkListener,
+      NestedJobStepListener nestedJobStepListener) {
 
+    return new StepListeners(
+        progressListener, skipListener, metricChunkListener, nestedJobStepListener);
+  }
 }

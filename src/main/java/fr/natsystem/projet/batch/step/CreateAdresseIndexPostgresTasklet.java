@@ -19,27 +19,32 @@ public class CreateAdresseIndexPostgresTasklet implements CreateIndexInterface {
   @Override
   public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) {
     log.info("Create Adresse Index Postgres tasklet");
-      jdbcTemplate.execute("""
+    jdbcTemplate.execute(
+        """
     CREATE INDEX IF NOT EXISTS idx_adresse_rue
     ON adresse(LOWER(nom_voie) text_pattern_ops)
     """);
 
-      jdbcTemplate.execute("""
+    jdbcTemplate.execute(
+        """
     CREATE INDEX IF NOT EXISTS idx_adresse_codePostal
     ON adresse(code_postal text_pattern_ops)
     """);
 
-      jdbcTemplate.execute("""
+    jdbcTemplate.execute(
+        """
     CREATE INDEX IF NOT EXISTS idx_adresse_commune
     ON adresse(LOWER(nom_commune) text_pattern_ops)
     """);
 
-      jdbcTemplate.execute("""
+    jdbcTemplate.execute(
+        """
     CREATE INDEX IF NOT EXISTS idx_adresse_search
     ON adresse USING GIN(search_text gin_trgm_ops)
     """);
 
-      jdbcTemplate.execute("""
+    jdbcTemplate.execute(
+        """
     CREATE INDEX IF NOT EXISTS adresse_position_idx
     ON adresse USING GIST(position)
     """);
