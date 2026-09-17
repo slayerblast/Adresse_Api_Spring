@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CreateStagingIndexTasklet implements Tasklet {
-
+  private static final String IMPORT_DVF_JOB = "importDvfJob";
   private final JdbcTemplate jdbcTemplate;
 
   @Override
@@ -19,7 +19,7 @@ public class CreateStagingIndexTasklet implements Tasklet {
     String innerJob =
         contribution.getStepExecution().getJobExecution().getJobParameters().getString("innerJob");
 
-    if ("importDvfJob".equals(innerJob)) {
+    if (IMPORT_DVF_JOB.equals(innerJob)) {
 
       jdbcTemplate.execute(
           """
