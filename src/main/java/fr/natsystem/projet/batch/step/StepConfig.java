@@ -1,11 +1,11 @@
 package fr.natsystem.projet.batch.step;
 
-import fr.natsystem.projet.batch.Partitioner.CodeInseePartitioner;
-import fr.natsystem.projet.batch.Partitioner.DvfPartitioner;
 import fr.natsystem.projet.batch.listener.AdresseSkipListener;
 import fr.natsystem.projet.batch.listener.NestedJobStepListener;
 import fr.natsystem.projet.batch.listener.StepListeners;
 import fr.natsystem.projet.batch.listener.StepProgressListener;
+import fr.natsystem.projet.batch.partitioner.CodeInseePartitioner;
+import fr.natsystem.projet.batch.partitioner.DvfPartitioner;
 import fr.natsystem.projet.batch.writer.AdresseDedupWriter;
 import fr.natsystem.projet.model.Adresse;
 import fr.natsystem.projet.model.Dvf;

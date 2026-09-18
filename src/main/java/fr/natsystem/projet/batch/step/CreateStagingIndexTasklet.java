@@ -53,17 +53,6 @@ public class CreateStagingIndexTasklet implements Tasklet {
             ON adresse_staging(id, type_position, x, y)
             """);
     }
-    jdbcTemplate.batchUpdate(
-        """
-                ALTER TABLE adresse
-                ADD COLUMN IF NOT EXISTS position geometry(Point, 4326)
-                GENERATED ALWAYS AS (
-                    ST_SetSRID(
-                        ST_MakePoint(lon, lat),
-                        4326
-                    )
-                ) STORED;
-                """);
 
     return RepeatStatus.FINISHED;
   }

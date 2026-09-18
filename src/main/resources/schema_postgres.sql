@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS adresse (
                                        CONSTRAINT uk_adresse UNIQUE (id, type_position, x, y)
     );
 
+ALTER TABLE IF EXISTS public.adresse
+    ADD COLUMN "position" geometry(Point,4326) GENERATED ALWAYS AS (st_setsrid(st_makepoint(lon, lat), 4326)) STORED;
+
 CREATE TABLE IF NOT EXISTS adresse_staging (
                                                id TEXT,
                                                id_fantoir TEXT,
